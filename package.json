@@ -1,10 +1,10 @@
 {
-  "name": "storentia-create",
-  "version": "1.0.1",
+  "name": "create-storentia",
+  "version": "1.0.2",
   "description": "Create a new Storentia e-commerce store with one command",
   "main": "bin/cli.js",
   "bin": {
-    "storentia-create": "./bin/cli.js"
+    "create-storentia": "./bin/cli.js"
   },
   "files": [
     "bin"
@@ -17,14 +17,14 @@
   },
   "keywords": [
     "storentia",
-    "storentia-create",
+    "create-storentia",
     "ecommerce",
     "nextjs",
     "store",
     "template",
     "react",
     "tailwind",
-    "npx"
+    "npm-create"
   ],
   "author": "TechSolace",
   "license": "MIT",
