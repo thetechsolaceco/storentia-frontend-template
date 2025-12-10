@@ -7,13 +7,31 @@ A modern, feature-rich e-commerce store template built with Next.js 16, React 19
 Create a new Storentia store with one command:
 
 ```bash
+npm create storentia@latest
+```
+
+You'll be prompted to enter:
+1. **Store name** - Your store's name (e.g., "My Awesome Store")
+2. **Authentication key** - Your Storentia authentication key
+
+The CLI will automatically:
+- ✅ Clone the template
+- ✅ Set up your project with the specified name
+- ✅ Create `.env.local` for your main store
+- ✅ Create `.env.dashboard` for your admin dashboard
+- ✅ Install all dependencies
+- ✅ Configure authentication automatically
+
+Or provide the store name directly:
+
+```bash
 npm create storentia@latest my-store-name
 ```
 
 Or with npx:
 
 ```bash
-npx create-storentia@latest my-store-name
+npx create-storentia@latest
 ```
 
 Then navigate to your project and start the development server:
@@ -46,6 +64,32 @@ Open [http://localhost:3000](http://localhost:3000) to see your store.
 - Order management
 - Responsive navigation
 - And much more!
+
+## 🔐 Environment Configuration
+
+The CLI automatically creates three environment files:
+
+### `.env.local` (Main Store)
+```env
+STORENTIA_AUTH=your_authentication_key
+NEXT_PUBLIC_STORE_NAME=Your Store Name
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
+```
+
+### `.env.dashboard` (Admin Dashboard)
+```env
+STORENTIA_AUTH=your_authentication_key
+NEXT_PUBLIC_DASHBOARD_MODE=true
+NEXT_PUBLIC_STORE_NAME=Your Store Name
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=auto_generated_secret
+```
+
+### `.env.example` (Reference Template)
+A template file for your reference with all available environment variables.
+
+**⚠️ Important**: Never commit `.env.local` or `.env.dashboard` to version control. These files are automatically added to `.gitignore`.
 
 ## 🛠️ Available Scripts
 
