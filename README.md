@@ -7,7 +7,7 @@ A modern, feature-rich e-commerce store template built with Next.js 16, React 19
 Create a new Storentia store with one command:
 
 ```bash
-npm create storentia@latest
+npx storentia-create
 ```
 
 You'll be prompted to enter:
@@ -25,13 +25,7 @@ The CLI will automatically:
 Or provide the store name directly:
 
 ```bash
-npm create storentia@latest my-store-name
-```
-
-Or with npx:
-
-```bash
-npx create-storentia@latest
+npx storentia-create my-store-name
 ```
 
 Then navigate to your project and start the development server:
