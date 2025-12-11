@@ -10,6 +10,8 @@ coverage
 *.test.ts
 *.spec.js
 *.spec.ts
+test-*.js
+test-*.sh
 
 # IDE
 .vscode
@@ -38,3 +40,22 @@ yarn-error.log*
 out
 dist
 build
+
+# Development Documentation (keep in repo but exclude from package)
+CLEANUP_FEATURE.md
+INTERACTIVE_CLI_UPDATE.md
+NPM_2FA_SETUP.md
+SETUP_SUMMARY.md
+TESTING_BEFORE_PUBLISH.md
+WHY_NPM_CREATE_DOESNT_WORK.md
+NPX_USAGE_GUIDE.md
+PUBLISHED_SUCCESS.md
+PUBLISHING_GUIDE.md
+API_VALIDATION_IMPLEMENTATION.md
+
+# Publishing scripts
+publish.sh
+test-cli.sh
+
+# Package tarballs
+*.tgz

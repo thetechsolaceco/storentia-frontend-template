@@ -12,15 +12,19 @@ npm create storentia@latest
 
 You'll be prompted to enter:
 1. **Store name** - Your store's name (e.g., "My Awesome Store")
-2. **Authentication key** - Your Storentia authentication key
+2. **Authentication key** - Your Storentia authentication key (will be validated automatically)
 
 The CLI will automatically:
+- ✅ **Validate your API key** against the Storentia backend
+- ✅ Retrieve your store information from the API
 - ✅ Clone the template
 - ✅ Set up your project with the specified name
-- ✅ Create `.env.local` for your main store
-- ✅ Create `.env.dashboard` for your admin dashboard
+- ✅ Create `.env.local` with validated store data
+- ✅ Create `.env.dashboard` with validated store data
 - ✅ Install all dependencies
 - ✅ Configure authentication automatically
+
+> **New in v1.1.0**: API keys are now validated before store creation! See [API_VALIDATION_FEATURE.md](./API_VALIDATION_FEATURE.md) for details.
 
 Or provide the store name directly:
 
@@ -45,6 +49,7 @@ Open [http://localhost:3000](http://localhost:3000) to see your store.
 
 ## ✨ Features
 
+- **API Key Validation**: Automatic validation of Storentia API keys before store creation
 - **Modern Stack**: Built with Next.js 16 and React 19
 - **Beautiful UI**: Pre-built components using Radix UI and Tailwind CSS
 - **Dashboard**: Complete admin dashboard for store management
@@ -67,21 +72,35 @@ Open [http://localhost:3000](http://localhost:3000) to see your store.
 
 ## 🔐 Environment Configuration
 
-The CLI automatically creates three environment files:
+The CLI automatically creates three environment files with **validated store data** from the Storentia API:
 
 ### `.env.local` (Main Store)
 ```env
+# Authentication Key
 STORENTIA_AUTH=your_authentication_key
+
+# Store Information (from validated API response)
+NEXT_PUBLIC_STORE_ID=your_store_id
 NEXT_PUBLIC_STORE_NAME=Your Store Name
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+NEXT_PUBLIC_STORE_DESCRIPTION=Your store description
+
+# Store Owner Information
+STORE_OWNER_ID=owner_id
+STORE_OWNER_NAME=Owner Name
+STORE_OWNER_EMAIL=owner@example.com
+
+# API Key Information
+API_KEY_TYPE=PROD
+API_KEY_PERMISSIONS=READ,WRITE,MANAGE_PRODUCTS
+
+# API Configuration
+NEXT_PUBLIC_API_URL=https://storekit.samarthh.me/v1
 ```
 
 ### `.env.dashboard` (Admin Dashboard)
+Same as `.env.local` with additional dashboard-specific variables:
 ```env
-STORENTIA_AUTH=your_authentication_key
 NEXT_PUBLIC_DASHBOARD_MODE=true
-NEXT_PUBLIC_STORE_NAME=Your Store Name
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=auto_generated_secret
 ```
@@ -90,6 +109,8 @@ NEXTAUTH_SECRET=auto_generated_secret
 A template file for your reference with all available environment variables.
 
 **⚠️ Important**: Never commit `.env.local` or `.env.dashboard` to version control. These files are automatically added to `.gitignore`.
+
+**📖 Learn More**: See [API_VALIDATION_FEATURE.md](./API_VALIDATION_FEATURE.md) for detailed information about API key validation.
 
 ## 🛠️ Available Scripts
 

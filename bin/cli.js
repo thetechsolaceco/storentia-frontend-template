@@ -4,6 +4,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const https = require('https');
 
 // Create readline interface for user input
 const rl = readline.createInterface({
@@ -13,6 +14,37 @@ const rl = readline.createInterface({
 
 // Promisify question
 const question = (query) => new Promise((resolve) => rl.question(query, resolve));
+
+// Validate API Key with Storentia Backend
+async function validateApiKey(apiKey) {
+    return new Promise((resolve, reject) => {
+        const url = `https://storekit.samarthh.me/v1/auth/key/validate?key=${encodeURIComponent(apiKey)}`;
+
+        https.get(url, (res) => {
+            let data = '';
+
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                try {
+                    const response = JSON.parse(data);
+
+                    if (response.success && response.message === 'API key is valid') {
+                        resolve(response.store_data);
+                    } else {
+                        reject(new Error(response.message || 'Invalid API key'));
+                    }
+                } catch (error) {
+                    reject(new Error('Failed to parse API response'));
+                }
+            });
+        }).on('error', (error) => {
+            reject(new Error(`API validation failed: ${error.message}`));
+        });
+    });
+}
 
 // Main function
 async function main() {
@@ -44,6 +76,27 @@ async function main() {
 
     if (!authKey || authKey.trim() === '') {
         console.error('❌ Error: Authentication key cannot be empty!');
+        rl.close();
+        process.exit(1);
+    }
+
+    // Validate API key
+    console.log('\n🔍 Validating your authentication key...');
+    let storeData;
+    try {
+        storeData = await validateApiKey(authKey.trim());
+        console.log('✅ Authentication successful!\n');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('📊 Store Information:');
+        console.log(`  • Store Name: ${storeData.store.name}`);
+        console.log(`  • Store ID: ${storeData.storeId}`);
+        console.log(`  • Owner: ${storeData.store.owner.name}`);
+        console.log(`  • Key Type: ${storeData.type}`);
+        console.log(`  • Permissions: ${storeData.permissions.join(', ')}`);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    } catch (error) {
+        console.error(`\n❌ Authentication failed: ${error.message}`);
+        console.error('Please check your API key and try again.\n');
         rl.close();
         process.exit(1);
     }
@@ -90,11 +143,22 @@ async function main() {
 # Authentication Key
 STORENTIA_AUTH=${authKey.trim()}
 
-# Store Information
-NEXT_PUBLIC_STORE_NAME=${storeName}
+# Store Information (from validated API response)
+NEXT_PUBLIC_STORE_ID=${storeData.storeId}
+NEXT_PUBLIC_STORE_NAME=${storeData.store.name}
+NEXT_PUBLIC_STORE_DESCRIPTION=${storeData.store.description || ''}
 
-# API Configuration (update with your backend URL)
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+# Store Owner Information
+STORE_OWNER_ID=${storeData.store.ownerId}
+STORE_OWNER_NAME=${storeData.store.owner.name}
+STORE_OWNER_EMAIL=${storeData.store.owner.email}
+
+# API Key Information
+API_KEY_TYPE=${storeData.type}
+API_KEY_PERMISSIONS=${storeData.permissions.join(',')}
+
+# API Configuration
+NEXT_PUBLIC_API_URL=https://storekit.samarthh.me/v1
 
 # Optional: Add your custom environment variables below
 `;
@@ -111,10 +175,23 @@ STORENTIA_AUTH=${authKey.trim()}
 
 # Dashboard Configuration
 NEXT_PUBLIC_DASHBOARD_MODE=true
-NEXT_PUBLIC_STORE_NAME=${storeName}
 
-# API Configuration (update with your backend URL)
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+# Store Information (from validated API response)
+NEXT_PUBLIC_STORE_ID=${storeData.storeId}
+NEXT_PUBLIC_STORE_NAME=${storeData.store.name}
+NEXT_PUBLIC_STORE_DESCRIPTION=${storeData.store.description || ''}
+
+# Store Owner Information
+STORE_OWNER_ID=${storeData.store.ownerId}
+STORE_OWNER_NAME=${storeData.store.owner.name}
+STORE_OWNER_EMAIL=${storeData.store.owner.email}
+
+# API Key Information
+API_KEY_TYPE=${storeData.type}
+API_KEY_PERMISSIONS=${storeData.permissions.join(',')}
+
+# API Configuration
+NEXT_PUBLIC_API_URL=https://storekit.samarthh.me/v1
 
 # Session Configuration
 NEXTAUTH_URL=http://localhost:3000
@@ -131,13 +208,25 @@ NEXTAUTH_SECRET=${generateRandomSecret()}
 # Copy this file to .env.local and fill in your values
 
 # Authentication Key (Required)
-STORENTIA_AUTH=your_authentication_key_here
+# Get your key from https://storekit.samarthh.me
+STORENTIA_AUTH=sk_prod_your_authentication_key_here
 
-# Store Information
+# Store Information (Auto-populated from API validation)
+NEXT_PUBLIC_STORE_ID=your_store_id
 NEXT_PUBLIC_STORE_NAME=Your Store Name
+NEXT_PUBLIC_STORE_DESCRIPTION=Your store description
+
+# Store Owner Information
+STORE_OWNER_ID=owner_id
+STORE_OWNER_NAME=Owner Name
+STORE_OWNER_EMAIL=owner@example.com
+
+# API Key Information
+API_KEY_TYPE=PROD
+API_KEY_PERMISSIONS=READ,WRITE,MANAGE_PRODUCTS
 
 # API Configuration
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+NEXT_PUBLIC_API_URL=https://storekit.samarthh.me/v1
 
 # For Dashboard (.env.dashboard)
 NEXT_PUBLIC_DASHBOARD_MODE=true
