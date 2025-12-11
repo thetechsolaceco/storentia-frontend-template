@@ -24,7 +24,7 @@ The CLI will automatically:
 - ✅ Install all dependencies
 - ✅ Configure authentication automatically
 
-> **New in v1.1.0**: API keys are now validated before store creation! See [API_VALIDATION_FEATURE.md](./API_VALIDATION_FEATURE.md) for details.
+> **New in v1.1.0**: API keys are now validated before store creation! See [API Validation Guide](./docs/guides/API_VALIDATION.md) for details.
 
 Or provide the store name directly:
 
@@ -110,7 +110,7 @@ A template file for your reference with all available environment variables.
 
 **⚠️ Important**: Never commit `.env.local` or `.env.dashboard` to version control. These files are automatically added to `.gitignore`.
 
-**📖 Learn More**: See [API_VALIDATION_FEATURE.md](./API_VALIDATION_FEATURE.md) for detailed information about API key validation.
+**📖 Learn More**: See [API Validation Guide](./docs/guides/API_VALIDATION.md) for detailed information about API key validation.
 
 ## 🛠️ Available Scripts
 
@@ -147,9 +147,16 @@ The template is fully customizable. You can:
 - **Charts**: [Recharts](https://recharts.org/)
 - **TypeScript**: Full type safety
 
+## 📚 Documentation
+
+- [CLI Usage Guide](./docs/guides/CLI_USAGE.md)
+- [API Validation](./docs/guides/API_VALIDATION.md)
+- [Changelog](./docs/CHANGELOG.md)
+- [Contributing](./docs/development/CONTRIBUTING.md)
+
 ## 🤝 Contributing
 
-Contributions are welcome! Feel free to open issues or submit pull requests.
+Contributions are welcome! See [Contributing Guide](./docs/development/CONTRIBUTING.md) for details.
 
 ## 📄 License
 

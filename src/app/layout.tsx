@@ -6,9 +6,9 @@ import { ThemeProvider } from "@/components/theme-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "StoreKit - Premium Ecommerce Template",
+  title: "Storentia - Premium Ecommerce",
   description:
-    "A modern, minimal ecommerce store built with Next.js and Shadcn UI.",
+    "A modern, minimal ecommerce store.",
 };
 
 export default function RootLayout({
