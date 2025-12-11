@@ -1,9 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -25,7 +25,63 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://storekit.samarthh.me/v1";
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  picture?: string;
+}
+
 export default function DashboardPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        console.log("[Dashboard] Fetching user from:", `${API_URL}/user/@me`);
+        console.log("[Dashboard] Cookies:", document.cookie);
+        
+        const response = await fetch(`${API_URL}/user/@me`, {
+          credentials: "include",
+        });
+
+        console.log("[Dashboard] Response status:", response.status);
+
+        if (!response.ok) {
+          console.log("[Dashboard] Not authenticated, redirecting to login");
+          router.push("/storentia/login");
+          return;
+        }
+
+        const data = await response.json();
+        console.log("[Dashboard] User data:", data);
+        setUser(data.user || data);
+      } catch (error) {
+        console.error("[Dashboard] Error fetching user:", error);
+        router.push("/storentia/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -42,7 +98,26 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {user && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              {user.picture && (
+                <img
+                  src={user.picture}
+                  alt={user.name}
+                  className="w-12 h-12 rounded-full"
+                />
+              )}
+              <div>
+                <p className="font-medium">Welcome back, {user.name}</p>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpiData.map((kpi, i) => (
           <Card key={i}>
@@ -81,7 +156,6 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* Revenue Chart */}
         <Card className="col-span-4">
           <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
@@ -119,7 +193,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent Orders */}
         <Card className="col-span-3">
           <CardHeader>
             <CardTitle>Recent Orders</CardTitle>

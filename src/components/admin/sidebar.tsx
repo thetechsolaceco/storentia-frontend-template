@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/components/providers/auth-provider";
 import {
   LayoutDashboard,
   Package,
@@ -17,7 +18,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { clearUserSession } from "@/lib/apiClients";
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/storentia/dashboard" },
@@ -34,11 +34,7 @@ const sidebarItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
-
-  const handleLogout = () => {
-    clearUserSession();
-    window.location.href = "/storentia/login";
-  };
+  const { logout } = useAuth();
 
   return (
     <aside className="w-64 bg-[#1C1C24] text-white flex flex-col h-screen fixed left-0 top-0 z-40">
@@ -81,7 +77,7 @@ export function AdminSidebar() {
         <Button
           variant="ghost"
           className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-400/10"
-          onClick={handleLogout}
+          onClick={logout}
         >
           <LogOut className="mr-2 h-4 w-4" />
           Logout

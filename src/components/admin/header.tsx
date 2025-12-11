@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useAuth } from "@/components/providers/auth-provider";
 import { Bell, Search, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,32 +14,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getUserSession, authAPI, type User } from "@/lib/apiClients";
-import { useRouter } from "next/navigation";
 
 export function AdminHeader() {
-  const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const { user } = getUserSession();
-    setUser(user);
-  }, []);
-
-  const handleLogout = async () => {
-    await authAPI.logout();
-    router.push("/storentia/login");
-  };
+  const { user, logout, isLoading } = useAuth();
 
   const userName = user?.name || "User";
   const userEmail = user?.email || "";
-  const userImage = user?.image || "";
+  const userImage = (user as { picture?: string })?.picture || user?.image || "";
   const initials = userName
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  console.log("[AdminHeader] User:", user, "Loading:", isLoading);
 
   return (
     <header className="h-16 bg-background border-b flex items-center justify-between px-6 sticky top-0 z-30">
@@ -85,7 +74,7 @@ export function AdminHeader() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={handleLogout}
+              onClick={logout}
               className="text-red-600 cursor-pointer"
             >
               <LogOut className="mr-2 h-4 w-4" />

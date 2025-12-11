@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Store } from "lucide-react";
-import { authAPI } from "@/lib/apiClients";
+import { Store, AlertCircle } from "lucide-react";
+
+const API_URL = "https://storekit.samarthh.me/v1";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -35,12 +37,16 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-export default function AdminLoginPage() {
-  const [loading, setLoading] = useState(false);
+export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const handleGoogleLogin = () => {
-    setLoading(true);
-    authAPI.initiateGoogleAuth();
+    setIsRedirecting(true);
+    const authUrl = `${API_URL}/auth/google`;
+    console.log("[Login] Redirecting to Google OAuth:", authUrl);
+    window.location.href = authUrl;
   };
 
   return (
@@ -58,19 +64,26 @@ export default function AdminLoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {error && (
+            <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50 dark:bg-red-950/20 p-3 rounded-lg">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <p>{decodeURIComponent(error)}</p>
+            </div>
+          )}
+
           <Button
             type="button"
             variant="outline"
             className="w-full h-12 text-base"
             onClick={handleGoogleLogin}
-            disabled={loading}
+            disabled={isRedirecting}
           >
-            {loading ? (
+            {isRedirecting ? (
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-3" />
             ) : (
               <GoogleIcon className="h-5 w-5 mr-3" />
             )}
-            {loading ? "Redirecting to Google..." : "Continue with Google"}
+            {isRedirecting ? "Redirecting to Google..." : "Continue with Google"}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
