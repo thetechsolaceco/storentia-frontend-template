@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getUserSession, clearUserSession, type User } from "@/lib/apiClients";
+import { getUserSession, authAPI, type User } from "@/lib/apiClients";
 import { useRouter } from "next/navigation";
 
 export function AdminHeader() {
@@ -26,8 +26,8 @@ export function AdminHeader() {
     setUser(user);
   }, []);
 
-  const handleLogout = () => {
-    clearUserSession();
+  const handleLogout = async () => {
+    await authAPI.logout();
     router.push("/storentia/login");
   };
 

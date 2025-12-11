@@ -4,7 +4,7 @@ export {
   getUserSession,
   clearUserSession,
   isAuthenticated,
-  getAuthToken,
+  isAuthenticatedLocal,
   setApiKey,
   getApiKey,
   setStoreData,
@@ -17,8 +17,14 @@ export {
   type Store,
   type StoreOwner,
   type ValidationResponse,
+  type AuthResponse,
 } from "./auth";
 
-export { fetchWithCredentials, fetchWithApiKey, BASE_URL } from "./shared";
+export { collectionsAPI, type Collection, type CollectionParams } from "./collections";
+export { productsAPI, type Product, type ProductParams } from "./products";
+export { billingsAPI, type Billing, type BillingParams } from "./billings";
+export { discountsAPI, type Discount, type DiscountParams } from "./discounts";
+export { usersAPI, type UserAccount, type UserParams } from "./users";
 
+export { fetchWithCredentials, fetchWithApiKey, BASE_URL } from "./shared";
 export { API_ENDPOINTS } from "./api";

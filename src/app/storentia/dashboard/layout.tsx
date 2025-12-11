@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { AdminHeader } from "@/components/admin/header";
 import { isAuthenticated } from "@/lib/apiClients";
@@ -12,16 +12,19 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push("/storentia/login");
-    } else {
-      setIsLoading(false);
-    }
-  }, [pathname, router]);
+    const checkAuth = async () => {
+      const authenticated = await isAuthenticated();
+      if (!authenticated) {
+        router.push("/storentia/login");
+      } else {
+        setIsLoading(false);
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   if (isLoading) {
     return (
