@@ -1,13 +1,7 @@
 #!/usr/bin/env node
 
-/**
- * Test script for API key validation
- * This script tests the validateApiKey function with the provided test key
- */
-
 const https = require('https');
 
-// Validate API Key with Storentia Backend
 async function validateApiKey(apiKey) {
     return new Promise((resolve, reject) => {
         const url = `https://storekit.samarthh.me/v1/auth/key/validate?key=${encodeURIComponent(apiKey)}`;
@@ -38,48 +32,27 @@ async function validateApiKey(apiKey) {
     });
 }
 
-// Test with the provided key
 const testKey = 'sk_prod_gGBtannC3LcP76L3QIlmxLkyWpDuCuDnJfB9095je-I';
 
 console.log('🧪 Testing API Key Validation\n');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 console.log(`Testing with key: ${testKey.substring(0, 20)}...\n`);
-console.log('🔍 Validating...\n');
 
 validateApiKey(testKey)
     .then((storeData) => {
         console.log('✅ Validation Successful!\n');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('📊 Store Data Retrieved:\n');
-        console.log('Store Information:');
-        console.log(`  • Store ID: ${storeData.storeId}`);
-        console.log(`  • Store Name: ${storeData.store.name}`);
-        console.log(`  • Description: ${storeData.store.description || '(empty)'}`);
-        console.log(`  • Created: ${storeData.store.createdAt}`);
-        console.log(`  • Updated: ${storeData.store.updatedAt}\n`);
-
-        console.log('Owner Information:');
-        console.log(`  • Owner ID: ${storeData.store.ownerId}`);
-        console.log(`  • Name: ${storeData.store.owner.name}`);
-        console.log(`  • Email: ${storeData.store.owner.email}`);
-        console.log(`  • Role: ${storeData.store.owner.role}\n`);
-
-        console.log('API Key Information:');
-        console.log(`  • Key ID: ${storeData.keyId}`);
-        console.log(`  • Key Type: ${storeData.type}`);
-        console.log(`  • Permissions: ${storeData.permissions.join(', ')}`);
-
-        if (storeData.metadata) {
-            console.log(`  • Metadata: ${JSON.stringify(storeData.metadata)}`);
-        }
-
+        console.log('📊 Store Data:\n');
+        console.log(`  Store ID: ${storeData.storeId}`);
+        console.log(`  Store Name: ${storeData.store.name}`);
+        console.log(`  Owner: ${storeData.store.owner.name}`);
+        console.log(`  Key Type: ${storeData.type}`);
+        console.log(`  Permissions: ${storeData.permissions.join(', ')}`);
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        console.log('✅ Test Passed! API validation is working correctly.\n');
+        console.log('✅ Test Passed!\n');
     })
     .catch((error) => {
         console.error('❌ Validation Failed!\n');
         console.error(`Error: ${error.message}\n`);
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        console.log('❌ Test Failed!\n');
         process.exit(1);
     });

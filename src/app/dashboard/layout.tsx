@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { AdminHeader } from "@/components/admin/header";
+import { isAuthenticated } from "@/lib/apiClients";
 
 export default function AdminLayout({
   children,
@@ -21,8 +22,7 @@ export default function AdminLayout({
       return;
     }
 
-    const auth = localStorage.getItem("admin_auth");
-    if (!auth) {
+    if (!isAuthenticated()) {
       router.push("/dashboard/login");
     } else {
       setIsLoading(false);

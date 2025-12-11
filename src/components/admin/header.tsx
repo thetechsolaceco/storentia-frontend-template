@@ -1,12 +1,46 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Bell, Search, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "@/components/mode-toggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { getUserSession, clearUserSession, type User } from "@/lib/apiClients";
+import { useRouter } from "next/navigation";
 
 export function AdminHeader() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const { user } = getUserSession();
+    setUser(user);
+  }, []);
+
+  const handleLogout = () => {
+    clearUserSession();
+    router.push("/dashboard/login");
+  };
+
+  const userName = user?.name || "User";
+  const userEmail = user?.email || "";
+  const userImage = user?.image || "";
+  const initials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
     <header className="h-16 bg-background border-b flex items-center justify-between px-6 sticky top-0 z-30">
       <div className="w-96">
@@ -27,16 +61,38 @@ export function AdminHeader() {
           <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full" />
         </Button>
 
-        <div className="flex items-center gap-3 pl-4 border-l">
-          <div className="text-right hidden md:block">
-            <p className="text-sm font-medium">Admin User</p>
-            <p className="text-xs text-muted-foreground">Super Admin</p>
-          </div>
-          <Avatar>
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>AD</AvatarFallback>
-          </Avatar>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-3 pl-4 border-l cursor-pointer hover:opacity-80 transition-opacity">
+              <div className="text-right hidden md:block">
+                <p className="text-sm font-medium">{userName}</p>
+                <p className="text-xs text-muted-foreground">{userEmail}</p>
+              </div>
+              <Avatar>
+                <AvatarImage src={userImage} />
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <div>
+                <p className="font-medium">{userName}</p>
+                <p className="text-xs text-muted-foreground font-normal">
+                  {userEmail}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="text-red-600 cursor-pointer"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

@@ -2,12 +2,12 @@
   "name": "create-storentia",
   "version": "1.1.0",
   "description": "Create a new Storentia e-commerce store with one command",
-  "main": "bin/cli.js",
+  "main": "scripts/cli.js",
   "bin": {
-    "create-storentia": "./bin/cli.js"
+    "create-storentia": "./scripts/cli.js"
   },
   "files": [
-    "bin"
+    "scripts"
   ],
   "scripts": {
     "dev": "next dev",
