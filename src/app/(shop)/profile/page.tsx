@@ -72,11 +72,13 @@ export default function ProfilePage() {
     setUserLoading(true);
     try {
       const result = await getUserProfile();
-      if (result.success && result.data?.user) {
-        setUser(result.data.user);
+      if (result.success && result.data) {
+        // Handle both { user: ... } and direct user object response formats
+        const userData = 'user' in result.data ? result.data.user : result.data;
+        setUser(userData as UserProfile);
         setProfileForm({
-          name: result.data.user.name || '',
-          avatar: result.data.user.avatar || '',
+          name: userData.name || '',
+          avatar: userData.avatar || '',
         });
       }
     } catch (error) {
@@ -252,12 +254,24 @@ export default function ProfilePage() {
                 </div>
               ) : user ? (
                 <div className="space-y-6">
+                  {/* Show prompt to set name if null */}
+                  {!user.name && (
+                    <div className="p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <p className="text-amber-800 dark:text-amber-200 text-sm mb-3">
+                        Welcome! Please set your name to complete your profile.
+                      </p>
+                      <Button size="sm" onClick={() => setIsEditProfileOpen(true)}>
+                        Set Your Name
+                      </Button>
+                    </div>
+                  )}
+
                   <div className="flex items-start gap-6">
                     <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
                       {user.avatar ? (
                         <Image
                           src={user.avatar}
-                          alt={user.name}
+                          alt={user.name || 'User'}
                           fill
                           sizes="96px"
                           className="object-cover"
@@ -269,12 +283,16 @@ export default function ProfilePage() {
                       )}
                     </div>
                     <div className="flex-1 space-y-1">
-                      <h3 className="text-xl font-semibold">{user.name}</h3>
+                      <h3 className="text-xl font-semibold">
+                        {user.name || <span className="text-muted-foreground italic">Name not set</span>}
+                      </h3>
                       <p className="text-muted-foreground">{user.email}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
-                          {user.status}
-                        </span>
+                        {user.status && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
+                            {user.status}
+                          </span>
+                        )}
                         <span className="text-xs text-muted-foreground">
                           Member since {new Date(user.createdAt).toLocaleDateString()}
                         </span>
@@ -287,29 +305,35 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground">Full Name</Label>
-                      <p className="font-medium">{user.name}</p>
+                      <p className="font-medium">
+                        {user.name || <span className="text-muted-foreground italic">Not set</span>}
+                      </p>
                     </div>
                     <div>
                       <Label className="text-muted-foreground">Email</Label>
                       <p className="font-medium">{user.email}</p>
                     </div>
-                    <div>
-                      <Label className="text-muted-foreground">Account Role</Label>
-                      <p className="font-medium">{user.role}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">Last Login</Label>
-                      <p className="font-medium">
-                        {new Date(user.lastLogin).toLocaleString()}
-                      </p>
-                    </div>
+                    {user.role && (
+                      <div>
+                        <Label className="text-muted-foreground">Account Role</Label>
+                        <p className="font-medium">{user.role}</p>
+                      </div>
+                    )}
+                    {user.lastLogin && (
+                      <div>
+                        <Label className="text-muted-foreground">Last Login</Label>
+                        <p className="font-medium">
+                          {new Date(user.lastLogin).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
                     <DialogTrigger asChild>
                       <Button>
                         <Edit className="h-4 w-4 mr-2" />
-                        Edit Profile
+                        {user.name ? 'Edit Profile' : 'Set Up Profile'}
                       </Button>
                     </DialogTrigger>
                     <DialogContent>

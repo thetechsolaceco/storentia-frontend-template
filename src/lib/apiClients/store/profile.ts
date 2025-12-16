@@ -1,14 +1,15 @@
 import { BASE_URL } from "../shared";
-import { API_ENDPOINTS } from "../api";
+import { getStoreData } from "../auth";
 
 export interface UserProfile {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
-  role: string;
-  status: string;
+  storeId?: string;
+  role?: string;
+  status?: string;
   avatar?: string;
-  lastLogin: string;
+  lastLogin?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,7 +21,7 @@ export interface UpdateProfileRequest {
 
 export interface ProfileResponse {
   success: boolean;
-  data?: { user: UserProfile };
+  data?: { user: UserProfile } | UserProfile;
   message?: string;
   error?: string;
 }
@@ -32,9 +33,19 @@ export interface UpdateProfileResponse {
   error?: string;
 }
 
+function getStoreId(): string {
+  const storeData = getStoreData();
+  const storeId = storeData?.storeId || storeData?.store?.id;
+  if (!storeId) {
+    throw new Error("Store ID not found.");
+  }
+  return storeId;
+}
+
 export async function getUserProfile(): Promise<ProfileResponse> {
   try {
-    const response = await fetch(`${BASE_URL}${API_ENDPOINTS.USER_ME}`, {
+    const storeId = getStoreId();
+    const response = await fetch(`${BASE_URL}/store/${storeId}/@me`, {
       method: "GET",
       credentials: "include",
     });
@@ -50,7 +61,8 @@ export async function getUserProfile(): Promise<ProfileResponse> {
 
 export async function updateUserProfile(data: UpdateProfileRequest): Promise<UpdateProfileResponse> {
   try {
-    const response = await fetch(`${BASE_URL}${API_ENDPOINTS.USER_PROFILE}`, {
+    const storeId = getStoreId();
+    const response = await fetch(`${BASE_URL}/store/${storeId}/@me`, {
       method: "PUT",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
