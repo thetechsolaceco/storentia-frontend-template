@@ -22,15 +22,27 @@ export interface CartItem {
 
 export interface Cart {
   id: string;
-  items: CartItem[];
-  total?: number;
-  createdAt?: string;
-  updatedAt?: string;
+  userId: string;
+  cartItems: CartItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CartSummary {
+  itemCount: number;
+  total: number;
 }
 
 export interface CartResponse {
   success: boolean;
   data?: Cart;
+  message?: string;
+  error?: string;
+}
+
+export interface CartSummaryResponse {
+  success: boolean;
+  data?: CartSummary;
   message?: string;
   error?: string;
 }
@@ -53,6 +65,23 @@ export async function getCart(): Promise<CartResponse> {
   try {
     const storeId = getStoreId();
     const response = await fetch(`${BASE_URL}/store/${storeId}/cart`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      return { success: false, error: `API Error: ${response.status}` };
+    }
+    return response.json();
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Network error" };
+  }
+}
+
+export async function getCartSummary(): Promise<CartSummaryResponse> {
+  try {
+    const storeId = getStoreId();
+    const response = await fetch(`${BASE_URL}/store/${storeId}/cart/summary`, {
       method: "GET",
       credentials: "include",
     });

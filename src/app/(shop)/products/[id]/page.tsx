@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Heart, ShoppingCart, Star, Loader2, ArrowLeft, Minus, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { storeAPI, addToCart, type StoreProduct } from "@/lib/apiClients";
+import { storeAPI, addToCart, addToWishlist, getWishlist, removeFromWishlist, type StoreProduct } from "@/lib/apiClients";
 import { isAuthenticated } from "@/lib/apiClients/store/authentication";
 import Link from "next/link";
 
@@ -22,6 +22,9 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [inWishlist, setInWishlist] = useState(false);
+  const [wishlistItemId, setWishlistItemId] = useState<string | null>(null);
+  const [togglingWishlist, setTogglingWishlist] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -41,7 +44,26 @@ export default function ProductPage() {
       }
     };
 
-    if (productId) fetchProduct();
+    const checkWishlist = async () => {
+      if (!isAuthenticated()) return;
+      try {
+        const result = await getWishlist();
+        if (result.success && result.data?.wishlistItems) {
+          const item = result.data.wishlistItems.find(i => i.productId === productId);
+          if (item) {
+            setInWishlist(true);
+            setWishlistItemId(item.id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to check wishlist:', err);
+      }
+    };
+
+    if (productId) {
+      fetchProduct();
+      checkWishlist();
+    }
   }, [productId]);
 
   if (loading) {
@@ -95,6 +117,41 @@ export default function ProductPage() {
       setError('Failed to add to cart');
     } finally {
       setAddingToCart(false);
+    }
+  };
+
+  const handleToggleWishlist = async () => {
+    if (!isAuthenticated()) {
+      router.push('/login');
+      return;
+    }
+
+    if (!product?.id) return;
+
+    setTogglingWishlist(true);
+    try {
+      if (inWishlist && wishlistItemId) {
+        const result = await removeFromWishlist(wishlistItemId);
+        if (result.success) {
+          setInWishlist(false);
+          setWishlistItemId(null);
+          window.dispatchEvent(new Event('wishlist-update'));
+        }
+      } else {
+        const result = await addToWishlist(product.id);
+        if (result.success && result.data?.wishlistItems) {
+          const item = result.data.wishlistItems.find(i => i.productId === product.id);
+          if (item) {
+            setInWishlist(true);
+            setWishlistItemId(item.id);
+          }
+          window.dispatchEvent(new Event('wishlist-update'));
+        }
+      }
+    } catch (err) {
+      setError('Failed to update wishlist');
+    } finally {
+      setTogglingWishlist(false);
     }
   };
 
@@ -204,9 +261,19 @@ export default function ProductPage() {
               )}
               {addedToCart ? "Added!" : "Add to Cart"}
             </Button>
-            <Button size="lg" variant="outline" className="gap-2">
-              <Heart className="h-5 w-5" />
-              Wishlist
+            <Button
+              size="lg"
+              variant={inWishlist ? "default" : "outline"}
+              className="gap-2"
+              onClick={handleToggleWishlist}
+              disabled={togglingWishlist}
+            >
+              {togglingWishlist ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Heart className={`h-5 w-5 ${inWishlist ? "fill-current" : ""}`} />
+              )}
+              {inWishlist ? "In Wishlist" : "Wishlist"}
             </Button>
           </div>
 

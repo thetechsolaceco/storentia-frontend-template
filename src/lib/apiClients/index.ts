@@ -80,6 +80,7 @@ export {
 // Cart APIs
 export {
   getCart,
+  getCartSummary,
   addToCart,
   removeFromCart,
   clearCart,
@@ -87,5 +88,21 @@ export {
   type Cart,
   type CartItem,
   type CartResponse,
+  type CartSummary,
+  type CartSummaryResponse,
   type AddToCartRequest,
 } from "./store/cart";
+
+// Wishlist APIs
+export {
+  getWishlist,
+  getWishlistCount,
+  addToWishlist,
+  removeFromWishlist,
+  clearWishlist,
+  type Wishlist,
+  type WishlistItem,
+  type WishlistProduct,
+  type WishlistResponse,
+  type WishlistCountResponse,
+} from "./store/wishlist";

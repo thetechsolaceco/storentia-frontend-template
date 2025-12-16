@@ -37,7 +37,7 @@ export default function CartPage() {
     try {
       const result = await getCart();
       if (result.success && result.data) {
-        setCartItems(result.data.items || []);
+        setCartItems(result.data.cartItems || []);
       } else {
         setError(result.error || "Failed to load cart");
       }
