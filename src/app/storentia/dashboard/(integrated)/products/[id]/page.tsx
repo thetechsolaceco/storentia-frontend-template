@@ -9,16 +9,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  ArrowLeft, Loader2, Pencil, Trash2, Upload, X, Save, Calendar, Package,
+  ArrowLeft,
+  Loader2,
+  Pencil,
+  Link as LinkIcon,
+  Trash2,
+  Upload,
+  X,
+  Save,
+  Calendar,
+  Package,
 } from "lucide-react";
-import { productsAPI, type Product, type ProductStatus } from "@/lib/apiClients";
+import {
+  productsAPI,
+  type Product,
+  type ProductStatus,
+} from "@/lib/apiClients";
 import Link from "next/link";
 
 export default function ProductDetailPage() {
@@ -34,6 +58,8 @@ export default function ProductDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const multipleFileInputRef = useRef<HTMLInputElement>(null);
+  const [imageUrlInput, setImageUrlInput] = useState("");
 
   // Form states
   const [formTitle, setFormTitle] = useState("");
@@ -127,6 +153,48 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleMultipleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!e.target.files?.length) return;
+    setUploadingImage(true);
+    try {
+      const files = Array.from(e.target.files);
+      const response = await productsAPI.uploadMultipleImages(productId, files);
+      if (response.success) {
+        fetchProduct();
+      } else {
+        alert(response.message || "Failed to upload images");
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to upload images");
+    } finally {
+      setUploadingImage(false);
+      if (multipleFileInputRef.current) multipleFileInputRef.current.value = "";
+    }
+  };
+
+  const handleImageUrlAdd = async () => {
+    if (!imageUrlInput.trim()) return;
+    setUploadingImage(true);
+    try {
+      const response = await productsAPI.addImageUrl(
+        productId,
+        imageUrlInput.trim()
+      );
+      if (response.success) {
+        fetchProduct();
+        setImageUrlInput("");
+      } else {
+        alert(response.message || "Failed to add image URL");
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to add image URL");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleRemoveImage = async (imageId: string) => {
     try {
       const response = await productsAPI.removeImage(productId, imageId);
@@ -140,12 +208,38 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleRemoveCollection = async (collectionId: string) => {
+    if (
+      !confirm(
+        "Are you sure you want to remove this product from the collection?"
+      )
+    )
+      return;
+    try {
+      const response = await productsAPI.removeCollection(
+        productId,
+        collectionId
+      );
+      if (response.success) {
+        fetchProduct();
+      } else {
+        alert(response.message || "Failed to remove collection");
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to remove collection");
+    }
+  };
+
   const getStatusBadge = (status?: string) => {
     switch (status) {
-      case "ACTIVE": return <Badge variant="default">Active</Badge>;
-      case "DRAFT": return <Badge variant="secondary">Draft</Badge>;
-      case "UNLISTED": return <Badge variant="outline">Unlisted</Badge>;
-      default: return <Badge variant="secondary">Unknown</Badge>;
+      case "ACTIVE":
+        return <Badge variant="default">Active</Badge>;
+      case "DRAFT":
+        return <Badge variant="secondary">Draft</Badge>;
+      case "UNLISTED":
+        return <Badge variant="outline">Unlisted</Badge>;
+      default:
+        return <Badge variant="secondary">Unknown</Badge>;
     }
   };
 
@@ -170,7 +264,6 @@ export default function ProductDetailPage() {
     );
   }
 
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -185,16 +278,28 @@ export default function ProductDetailPage() {
             <h1 className="text-2xl font-bold">{product.title}</h1>
             <div className="flex items-center gap-2 mt-1">
               {getStatusBadge(product.status)}
-              <span className="text-sm text-muted-foreground">ID: {product.id}</span>
+              <span className="text-sm text-muted-foreground">
+                ID: {product.id}
+              </span>
             </div>
           </div>
         </div>
         <div className="flex gap-2">
           {editing ? (
             <>
-              <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>Cancel</Button>
+              <Button
+                variant="outline"
+                onClick={() => setEditing(false)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
               <Button onClick={handleSave} disabled={saving}>
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
                 Save
               </Button>
             </>
@@ -224,21 +329,38 @@ export default function ProductDetailPage() {
                 <>
                   <div className="space-y-2">
                     <Label>Title</Label>
-                    <Input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
+                    <Input
+                      value={formTitle}
+                      onChange={(e) => setFormTitle(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Description</Label>
-                    <Textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} rows={4} />
+                    <Textarea
+                      value={formDescription}
+                      onChange={(e) => setFormDescription(e.target.value)}
+                      rows={4}
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Price</Label>
-                      <Input type="number" step="0.01" value={formPrice} onChange={(e) => setFormPrice(e.target.value)} />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={formPrice}
+                        onChange={(e) => setFormPrice(e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Status</Label>
-                      <Select value={formStatus} onValueChange={(v) => setFormStatus(v as ProductStatus)}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                      <Select
+                        value={formStatus}
+                        onValueChange={(v) => setFormStatus(v as ProductStatus)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="ACTIVE">Active</SelectItem>
                           <SelectItem value="DRAFT">Draft</SelectItem>
@@ -250,11 +372,18 @@ export default function ProductDetailPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Stock</Label>
-                      <Input type="number" value={formStock} onChange={(e) => setFormStock(e.target.value)} />
+                      <Input
+                        type="number"
+                        value={formStock}
+                        onChange={(e) => setFormStock(e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>SKU</Label>
-                      <Input value={formSku} onChange={(e) => setFormSku(e.target.value)} />
+                      <Input
+                        value={formSku}
+                        onChange={(e) => setFormSku(e.target.value)}
+                      />
                     </div>
                   </div>
                 </>
@@ -266,22 +395,30 @@ export default function ProductDetailPage() {
                   </div>
                   <div>
                     <Label className="text-muted-foreground">Description</Label>
-                    <p className="text-sm">{product.description || "No description"}</p>
+                    <p className="text-sm">
+                      {product.description || "No description"}
+                    </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground">Price</Label>
-                      <p className="font-medium text-lg">${product.price?.toFixed(2) || "0.00"}</p>
+                      <p className="font-medium text-lg">
+                        ${product.price?.toFixed(2) || "0.00"}
+                      </p>
                     </div>
                     <div>
                       <Label className="text-muted-foreground">Status</Label>
-                      <div className="mt-1">{getStatusBadge(product.status)}</div>
+                      <div className="mt-1">
+                        {getStatusBadge(product.status)}
+                      </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground">Stock</Label>
-                      <p className="font-medium">{product.stock ?? "Not tracked"}</p>
+                      <p className="font-medium">
+                        {product.stock ?? "Not tracked"}
+                      </p>
                     </div>
                     <div>
                       <Label className="text-muted-foreground">SKU</Label>
@@ -302,33 +439,96 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-4 gap-3">
                 {product.images?.map((img) => (
                   <div key={img.id} className="relative group aspect-square">
-                    <img src={img.url} alt="" className="w-full h-full object-cover rounded-lg border" />
+                    <img
+                      src={img.url}
+                      alt=""
+                      className="w-full h-full object-cover rounded-lg border"
+                    />
                     <button
                       onClick={() => handleRemoveImage(img.id)}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </div>
                 ))}
-                <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                    disabled={uploadingImage}
-                  />
-                  {uploadingImage ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  ) : (
-                    <>
-                      <Upload className="h-8 w-8 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground mt-2">Upload</span>
-                    </>
-                  )}
-                </label>
+              </div>
+
+              <div className="mt-6">
+                <Tabs defaultValue="single" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="single">Single File</TabsTrigger>
+                    <TabsTrigger value="multiple">Multiple Files</TabsTrigger>
+                    <TabsTrigger value="url">Image URL</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="single" className="mt-4">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                      />
+                      {uploadingImage ? (
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <Upload className="h-8 w-8 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground mt-2">
+                            Click to upload single image
+                          </span>
+                        </>
+                      )}
+                    </label>
+                  </TabsContent>
+
+                  <TabsContent value="multiple" className="mt-4">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                      <input
+                        ref={multipleFileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleMultipleImageUpload}
+                        disabled={uploadingImage}
+                      />
+                      {uploadingImage ? (
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <Package className="h-8 w-8 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground mt-2">
+                            Click to upload multiple images
+                          </span>
+                        </>
+                      )}
+                    </label>
+                  </TabsContent>
+
+                  <TabsContent value="url" className="mt-4">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="https://example.com/image.jpg"
+                        value={imageUrlInput}
+                        onChange={(e) => setImageUrlInput(e.target.value)}
+                      />
+                      <Button
+                        onClick={handleImageUrlAdd}
+                        disabled={uploadingImage || !imageUrlInput.trim()}
+                      >
+                        {uploadingImage ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <LinkIcon className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </div>
             </CardContent>
           </Card>
@@ -352,14 +552,22 @@ export default function ProductDetailPage() {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Created</p>
-                  <p className="text-sm">{product.createdAt ? new Date(product.createdAt).toLocaleString() : "-"}</p>
+                  <p className="text-sm">
+                    {product.createdAt
+                      ? new Date(product.createdAt).toLocaleString()
+                      : "-"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Updated</p>
-                  <p className="text-sm">{product.updatedAt ? new Date(product.updatedAt).toLocaleString() : "-"}</p>
+                  <p className="text-sm">
+                    {product.updatedAt
+                      ? new Date(product.updatedAt).toLocaleString()
+                      : "-"}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -372,12 +580,28 @@ export default function ProductDetailPage() {
             <CardContent>
               {product.collections && product.collections.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {product.collections.map((col, i) => (
-                    <Badge key={i} variant="secondary">{String(col)}</Badge>
+                  {product.collections.map((col: any, i) => (
+                    <Badge
+                      key={i}
+                      variant="secondary"
+                      className="flex items-center gap-1"
+                    >
+                      {col.title || String(col)}
+                      {col.id && (
+                        <button
+                          onClick={() => handleRemoveCollection(col.id)}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </Badge>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No collections assigned</p>
+                <p className="text-sm text-muted-foreground">
+                  No collections assigned
+                </p>
               )}
             </CardContent>
           </Card>
@@ -390,12 +614,16 @@ export default function ProductDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Product</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{product.title}&quot;? This action cannot be undone.
+              Are you sure you want to delete &quot;{product.title}&quot;? This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

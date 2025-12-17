@@ -65,7 +65,10 @@ export default function DashboardPage() {
           if (keyResponse.success && keyResponse.store_data) {
             setApiKey(API_KEY);
             setStoreData(keyResponse.store_data);
-            console.log("[Dashboard] Store data saved:", keyResponse.store_data);
+            console.log(
+              "[Dashboard] Store data saved:",
+              keyResponse.store_data
+            );
           }
         }
       } catch (error) {
@@ -87,9 +90,13 @@ export default function DashboardPage() {
     <div className="space-y-8 font-sans">
       <div className=" flex items-center justify-between">
         <div>
-            <h1 className="text-4xl font-playfair font-medium tracking-tight text-emerald-950 dark:text-green-500">Dashboard</h1>
-            <p className="text-gray-500 mt-2 font-inter">Welcome back to your store overview.</p>
-        </div> 
+          <h1 className="text-4xl font-playfair font-medium tracking-tight text-foreground">
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-2 font-inter">
+            Welcome back to your store overview.
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

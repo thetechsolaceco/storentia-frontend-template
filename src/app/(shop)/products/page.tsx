@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,17 +19,29 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ShoppingCart, Heart } from "lucide-react";
-import { storeAPI, addToCart, addToWishlist, type StoreProduct, type StoreCollection } from "@/lib/apiClients";
+import {
+  storeAPI,
+  addToCart,
+  addToWishlist,
+  type StoreProduct,
+  type StoreCollection,
+} from "@/lib/apiClients";
 
 export default function ProductsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get("search") || "";
+
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [collections, setCollections] = useState<StoreCollection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(
+    null
+  );
   const [loadingCart, setLoadingCart] = useState<string | null>(null);
   const [loadingWishlist, setLoadingWishlist] = useState<string | null>(null);
 
@@ -54,8 +67,8 @@ export default function ProductsPage() {
         search: searchTerm || undefined,
       });
       if (response.success && response.data) {
-        setProducts(response.data.products);
-        setTotalPages(response.data.pagination.totalPages);
+        setProducts(response.data || []);
+        setTotalPages(response.pagination?.totalPages || 1);
       } else {
         setError(response.message || "Failed to load products");
       }
@@ -74,13 +87,40 @@ export default function ProductsPage() {
     fetchProducts();
   }, [page, selectedCollection]);
 
+  // Sync state with URL search params
+  useEffect(() => {
+    const query = searchParams.get("search") || "";
+    if (query !== searchTerm) {
+      setSearchTerm(query);
+      // We need to fetch products when URL changes.
+      // Ideally we should depend on searchTerm in fetchProducts or add it to dependency array of the main fetch effect.
+      // But fetchProducts reads the *current* state of searchTerm.
+      // If we just set state here, it might not be updated in the closure of an immediate fetch call unless we add it to deps.
+    }
+  }, [searchParams]);
+
+  // Trigger fetch when searchTerm changes (e.g. from URL)
+  // We combine this with the existing effect or add a new one.
+  // Let's modify the existing main effect to include searchTerm.
+  useEffect(() => {
+    fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]); // Adding searchTerm to dependency
+
   const handleSearch = () => {
     setPage(1);
-    fetchProducts();
+    // Push to URL instead of just fetching
+    if (searchTerm.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
+    } else {
+      router.push("/products");
+    }
   };
 
   const handleCollectionChange = (collectionId: string) => {
-    setSelectedCollection(selectedCollection === collectionId ? null : collectionId);
+    setSelectedCollection(
+      selectedCollection === collectionId ? null : collectionId
+    );
     setPage(1);
   };
 
@@ -100,7 +140,10 @@ export default function ProductsPage() {
     }
   };
 
-  const handleAddToWishlist = async (e: React.MouseEvent, productId: string) => {
+  const handleAddToWishlist = async (
+    e: React.MouseEvent,
+    productId: string
+  ) => {
     e.preventDefault();
     e.stopPropagation();
     setLoadingWishlist(productId);
@@ -143,14 +186,21 @@ export default function ProductsPage() {
                 <Label className="mb-3 block">Categories</Label>
                 <div className="space-y-2">
                   {collections.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No categories</p>
+                    <p className="text-sm text-muted-foreground">
+                      No categories
+                    </p>
                   ) : (
                     collections.map((collection) => (
-                      <div key={collection.id} className="flex items-center space-x-2">
+                      <div
+                        key={collection.id}
+                        className="flex items-center space-x-2"
+                      >
                         <Checkbox
                           id={collection.id}
                           checked={selectedCollection === collection.id}
-                          onCheckedChange={() => handleCollectionChange(collection.id)}
+                          onCheckedChange={() =>
+                            handleCollectionChange(collection.id)
+                          }
                         />
                         <label
                           htmlFor={collection.id}
@@ -192,7 +242,8 @@ export default function ProductsPage() {
             <div>
               <h1 className="text-2xl font-bold">
                 {selectedCollection
-                  ? collections.find((c) => c.id === selectedCollection)?.title || "Products"
+                  ? collections.find((c) => c.id === selectedCollection)
+                      ?.title || "Products"
                   : "All Products"}
               </h1>
               {selectedCollection && (
@@ -262,11 +313,15 @@ export default function ProductsPage() {
                           </div>
                         )}
                         {product.status === "ACTIVE" && (
-                          <Badge className="absolute top-2 left-2">Available</Badge>
+                          <Badge className="absolute top-2 left-2">
+                            Available
+                          </Badge>
                         )}
                       </div>
                       <CardContent className="p-4">
-                        <h3 className="font-semibold truncate">{product.title}</h3>
+                        <h3 className="font-semibold truncate">
+                          {product.title}
+                        </h3>
                         {product.description && (
                           <p className="text-sm text-muted-foreground truncate mt-1">
                             {product.description}

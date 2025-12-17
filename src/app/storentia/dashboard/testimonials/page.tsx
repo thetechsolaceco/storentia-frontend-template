@@ -76,14 +76,14 @@ export default function TestimonialsPage() {
                     <Button
                       size="icon"
                       variant="outline"
-                      className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                      className="h-8 w-8 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
                     >
                       <Check className="h-4 w-4" />
                     </Button>
                     <Button
                       size="icon"
                       variant="outline"
-                      className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="h-8 w-8 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
                       <X className="h-4 w-4" />
                     </Button>

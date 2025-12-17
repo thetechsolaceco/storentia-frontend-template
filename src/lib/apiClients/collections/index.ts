@@ -186,4 +186,102 @@ export const collectionsAPI = {
       };
     }
   },
+
+  async getProducts(collectionId: string, params?: CollectionParams): Promise<any> {
+    try {
+      const storeId = getStoreId();
+      const query = new URLSearchParams();
+      if (params?.page) query.append("page", String(params.page));
+      if (params?.limit) query.append("limit", String(params.limit));
+      const queryStr = query.toString();
+
+      const response = await fetch(
+        `${BASE_URL}${getCollectionsEndpoint(storeId)}/${collectionId}/products${queryStr ? `?${queryStr}` : ""}`,
+        { method: "GET", credentials: "include" }
+      );
+
+      if (!response.ok) {
+        return { success: false, message: `API Error: ${response.status}` };
+      }
+      return response.json();
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : "Network error" };
+    }
+  },
+
+  async addProducts(collectionId: string, productIds: string[]): Promise<any> {
+    try {
+      const storeId = getStoreId();
+      const response = await fetch(
+        `${BASE_URL}${getCollectionsEndpoint(storeId)}/${collectionId}/products`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productIds }),
+        }
+      );
+
+      if (!response.ok) {
+        return { success: false, message: `API Error: ${response.status}` };
+      }
+      return response.json();
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : "Network error" };
+    }
+  },
+
+  async removeProduct(collectionId: string, productId: string): Promise<any> {
+    try {
+      const storeId = getStoreId();
+      const response = await fetch(
+        `${BASE_URL}${getCollectionsEndpoint(storeId)}/${collectionId}/products/${productId}`,
+        { method: "DELETE", credentials: "include" }
+      );
+
+      if (!response.ok) {
+        return { success: false, message: `API Error: ${response.status}` };
+      }
+      return response.json();
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : "Network error" };
+    }
+  },
+
+  async uploadImage(collectionId: string, files: File[]): Promise<any> {
+    try {
+      const storeId = getStoreId();
+      const formData = new FormData();
+      files.forEach((file) => formData.append("image", file));
+
+      const response = await fetch(
+        `${BASE_URL}${getCollectionsEndpoint(storeId)}/${collectionId}/image/upload`,
+        { method: "POST", credentials: "include", body: formData }
+      );
+
+      if (!response.ok) {
+        return { success: false, message: `API Error: ${response.status}` };
+      }
+      return response.json();
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : "Network error" };
+    }
+  },
+
+  async deleteImage(collectionId: string): Promise<any> {
+    try {
+      const storeId = getStoreId();
+      const response = await fetch(
+        `${BASE_URL}${getCollectionsEndpoint(storeId)}/${collectionId}/image`,
+        { method: "DELETE", credentials: "include" }
+      );
+
+      if (!response.ok) {
+        return { success: false, message: `API Error: ${response.status}` };
+      }
+      return response.json();
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : "Network error" };
+    }
+  },
 };

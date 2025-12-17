@@ -31,11 +31,22 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 function FacebookIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round">
-             <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.791-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-        </svg>
-    )
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="0"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path
+        fill="#1877F2"
+        d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.791-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+      />
+    </svg>
+  );
 }
 
 export default function LoginPage() {
@@ -73,100 +84,111 @@ export default function LoginPage() {
 
   if (isChecking) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-black">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen w-full bg-white dark:bg-black overflow-hidden font-sans">
+    <div className="relative flex items-center justify-center min-h-screen w-full bg-background overflow-hidden font-sans">
       {/* Background Gradients */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-emerald-100/50 dark:bg-emerald-900/20 rounded-full blur-[120px]" />
-      <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-indigo-100/50 dark:bg-indigo-900/20 rounded-full blur-[100px]" />
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/20 dark:bg-primary/10 rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-secondary/80 dark:bg-secondary/20 rounded-full blur-[100px]" />
 
       <div className="relative z-10 w-full max-w-[420px] p-8 mx-4">
         {/* Card Container */}
-        <div className="absolute inset-0 bg-white dark:bg-white/5 backdrop-blur-xl rounded-3xl border border-gray-200 dark:border-white/10 shadow-xl" />
-        
-        <div className="relative z-20 flex flex-col items-center">
-            <h1 className="font-playfair text-4xl text-gray-900 dark:text-white font-medium mb-12 tracking-tight text-center mt-4">
-            Welcome Back
-            </h1>
+        <div className="absolute inset-0 bg-card/80 backdrop-blur-xl rounded-3xl border border-border/50 shadow-xl" />
 
-            <div className="w-full space-y-6">
-            
+        <div className="relative z-20 flex flex-col items-center">
+          <h1 className="font-playfair text-4xl text-foreground font-medium mb-12 tracking-tight text-center mt-4">
+            Welcome Back
+          </h1>
+
+          <div className="w-full space-y-6">
             {/* Email Input */}
             <div className="space-y-2">
-                <label className="text-xs text-gray-500 dark:text-zinc-400 font-medium ml-1">Email address</label>
-                <div className="relative group">
-                    <input 
-                        type="email" 
-                        placeholder="you@example.com"
-                        className="w-full bg-gray-50 dark:bg-zinc-900/50 text-gray-900 dark:text-white border border-gray-200 dark:border-white/5 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500/60 transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-600"
-                    />
-                </div>
+              <label className="text-xs text-muted-foreground font-medium ml-1">
+                Email address
+              </label>
+              <div className="relative group">
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  className="w-full bg-background text-foreground border border-input rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-all placeholder:text-muted-foreground/60"
+                />
+              </div>
             </div>
 
-             {/* Password Input */}
-             <div className="space-y-2">
-                <label className="text-xs text-gray-500 dark:text-zinc-400 font-medium ml-1">Password</label>
-                <div className="relative">
-                    <input 
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••••"
-                        className="w-full bg-gray-50 dark:bg-zinc-900/50 text-gray-900 dark:text-white border border-gray-200 dark:border-white/5 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500/60 transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-600 pr-10"
-                    />
-                    <button 
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-white transition-colors"
-                    >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                </div>
+            {/* Password Input */}
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground font-medium ml-1">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••••"
+                  className="w-full bg-background text-foreground border border-input rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-all placeholder:text-muted-foreground/60 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
             </div>
-
 
             {/* Divider */}
             <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-gray-200 dark:border-white/5"></span>
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white dark:bg-transparent px-2 text-gray-500 dark:text-zinc-500">or Sign in with</span>
-                </div>
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">
+                  or Sign in with
+                </span>
+              </div>
             </div>
 
             {/* Social Buttons */}
             <div className="grid grid-cols-2 gap-4">
-                 <Button 
-                    variant="outline" 
-                    className="h-12 bg-black dark:bg-black/40 border-gray-200 dark:border-white/5 hover:bg-gray-800 dark:hover:bg-white/5 text-white rounded-full gap-2 transition-all"
-                    onClick={() => handleGoogleLogin()}
-                >
-                    <GoogleIcon className="w-5 h-5" />
-                    Google
-                </Button>
-                <Button 
-                    variant="outline" 
-                    className="h-12 bg-black dark:bg-black/40 border-gray-200 dark:border-white/5 hover:bg-gray-800 dark:hover:bg-white/5 text-white rounded-full gap-2 transition-all"
-                >
-                    <Github className="w-5 h-5" />
-                    Github
-                </Button>
+              <Button
+                variant="outline"
+                className="h-12 bg-background border-border hover:bg-accent hover:text-accent-foreground rounded-full gap-2 transition-all"
+                onClick={() => handleGoogleLogin()}
+              >
+                <GoogleIcon className="w-5 h-5" />
+                Google
+              </Button>
+              <Button
+                variant="outline"
+                className="h-12 bg-background border-border hover:bg-accent hover:text-accent-foreground rounded-full gap-2 transition-all"
+              >
+                <Github className="w-5 h-5" />
+                Github
+              </Button>
             </div>
 
             {/* Footer */}
             <div className="space-y-4 text-center pt-4">
-                 <div className="text-[10px] text-gray-500 dark:text-zinc-600 leading-tight px-4">
-                    By signing up, you agree to the <span className="text-gray-600 dark:text-zinc-500 hover:text-gray-800 dark:hover:text-zinc-400 cursor-pointer">Terms of Service</span>.
-                    <br />
-                    You agree to receive our emails.
-                 </div>
+              <div className="text-[10px] text-muted-foreground leading-tight px-4">
+                By signing up, you agree to the{" "}
+                <span className="text-foreground hover:underline cursor-pointer">
+                  Terms of Service
+                </span>
+                .
+                <br />
+                You agree to receive our emails.
+              </div>
             </div>
-
-            </div>
+          </div>
         </div>
       </div>
     </div>

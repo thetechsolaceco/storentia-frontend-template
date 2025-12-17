@@ -13,26 +13,24 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black p-3">
-      <div className="flex min-h-[calc(100vh-24px)] gap-3">
+    <div className="min-h-screen bg-background">
+      <div className="flex min-h-screen">
         {/* Sidebar Container */}
         <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-        
+
         {/* Content Container */}
-        <div 
+        <div
           className={cn(
             "flex-1 transition-all duration-300 relative",
             collapsed ? "ml-[68px]" : "ml-[232px]"
           )}
         >
-          <div className="bg-[#E7F2EF] dark:bg-zinc-900 rounded-3xl min-h-[calc(100vh-24px)] relative overflow-hidden">
-            <div className="absolute top-6 right-8 z-50">
+          <div className="bg-muted/40 min-h-screen relative shadow-sm">
+            <div className="flex justify-end pt-6 px-8 z-50">
               <TopNav />
             </div>
-            <main className="p-8 pt-6">
-              <div className="mt-4">
-                {children}
-              </div>
+            <main className="px-8 pb-8 pt-4 flex-1">
+              <div>{children}</div>
             </main>
           </div>
         </div>
@@ -40,4 +38,3 @@ export default function DashboardLayout({
     </div>
   );
 }
-

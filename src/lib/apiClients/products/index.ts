@@ -237,6 +237,65 @@ export const productsAPI = {
     }
   },
 
+  async uploadMultipleImages(productId: string, files: File[]): Promise<{ success: boolean; data?: ProductImage[]; message?: string }> {
+    try {
+      const storeId = getStoreId();
+      const formData = new FormData();
+      files.forEach((file) => formData.append("images", file));
+
+      const response = await fetch(
+        `${BASE_URL}${getProductsEndpoint(storeId)}/${productId}/images/upload-multiple`,
+        { method: "POST", credentials: "include", body: formData }
+      );
+
+      if (!response.ok) {
+        return { success: false, message: `API Error: ${response.status}` };
+      }
+      return response.json();
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : "Network error" };
+    }
+  },
+
+  async addImageUrl(productId: string, imageUrl: string): Promise<ImageUploadResponse> {
+    try {
+      const storeId = getStoreId();
+      const response = await fetch(
+        `${BASE_URL}${getProductsEndpoint(storeId)}/${productId}/images`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl }),
+        }
+      );
+
+      if (!response.ok) {
+        return { success: false, message: `API Error: ${response.status}` };
+      }
+      return response.json();
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : "Network error" };
+    }
+  },
+
+  async removeCollection(productId: string, collectionId: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const storeId = getStoreId();
+      const response = await fetch(
+        `${BASE_URL}${getProductsEndpoint(storeId)}/${productId}/collections/${collectionId}`,
+        { method: "DELETE", credentials: "include" }
+      );
+
+      if (!response.ok) {
+        return { success: false, message: `API Error: ${response.status}` };
+      }
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : "Network error" };
+    }
+  },
+
   async bulkUpdateStatus(productIds: string[], status: ProductStatus): Promise<{ success: boolean; message?: string }> {
     try {
       const storeId = getStoreId();

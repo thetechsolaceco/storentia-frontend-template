@@ -29,14 +29,12 @@ export interface StoreProduct {
 
 export interface StoreProductsResponse {
   success: boolean;
-  data?: {
-    products: StoreProduct[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
+  data?: StoreProduct[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
   };
   message?: string;
 }

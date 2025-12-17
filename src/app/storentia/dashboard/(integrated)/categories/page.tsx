@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +32,14 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
+  Upload,
+  Link as LinkIcon,
+  X,
+  Package,
+  Minus,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { collectionsAPI, type Collection } from "@/lib/apiClients";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PageLoader } from "@/components/admin/page-loader";
@@ -62,13 +69,24 @@ export default function CategoriesPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
+  const [selectedCollection, setSelectedCollection] =
+    useState<Collection | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // Form states
   const [formTitle, setFormTitle] = useState("");
   const [formDescription, setFormDescription] = useState("");
-  
+
+  // Image Upload States
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Product Management States
+  const [manageProductsOpen, setManageProductsOpen] = useState(false);
+  const [collectionProducts, setCollectionProducts] = useState<any[]>([]);
+  const [availableProducts, setAvailableProducts] = useState<any[]>([]);
+  const [addingProducts, setAddingProducts] = useState(false);
+
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -110,16 +128,15 @@ export default function CategoriesPage() {
   const handleSearch = (term: string) => {
     setSearchTerm(term);
   };
-  
+
   // Effect to trigger search when term changes with debounce
   useEffect(() => {
-      const timer = setTimeout(() => {
-          setPage(1);
-          fetchCollections(); 
-      }, 500);
-      return () => clearTimeout(timer);
+    const timer = setTimeout(() => {
+      setPage(1);
+      fetchCollections();
+    }, 500);
+    return () => clearTimeout(timer);
   }, [searchTerm]);
-
 
   const handleCreate = async () => {
     if (!formTitle.trim()) return;
@@ -199,9 +216,73 @@ export default function CategoriesPage() {
     setDeleteOpen(true);
   };
 
+  const openManageProducts = async (collection: Collection) => {
+    setSelectedCollection(collection);
+    setManageProductsOpen(true);
+    setLoading(true); // Re-use loading or specific loading state
+    try {
+      const res = await collectionsAPI.getProducts(collection.id, {
+        limit: 100,
+      });
+      if (res.success && res.data) {
+        // API response wraps product in a relation object "product"
+        setCollectionProducts(
+          res.data.map((item: any) => item.product || item)
+        );
+      }
+    } catch (err) {
+      console.error("Failed to load collection products", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedCollection || !e.target.files?.length) return;
+    setUploadingImage(true);
+    try {
+      const files = Array.from(e.target.files);
+      const response = await collectionsAPI.uploadImage(
+        selectedCollection.id,
+        files
+      );
+      if (response.success) {
+        fetchCollections(); // Refresh list to see new image if applicable or just update local
+        // Optionally update selectedCollection if needed for preview
+      } else {
+        alert(response.message || "Failed to upload image");
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (!selectedCollection) return;
+    try {
+      const response = await collectionsAPI.deleteImage(selectedCollection.id);
+      if (response.success) {
+        fetchCollections();
+      } else {
+        alert(response.message || "Failed to delete image");
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete image");
+    }
+  };
+
+  // ... edit and delete are fine
+
   const handleSort = (key: keyof Collection | "productCount") => {
     let direction: "asc" | "desc" = "asc";
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === "asc"
+    ) {
       direction = "desc";
     }
     setSortConfig({ key, direction });
@@ -210,13 +291,13 @@ export default function CategoriesPage() {
   const sortedCollections = [...collections].sort((a, b) => {
     if (!sortConfig) return 0;
     const { key, direction } = sortConfig;
-    
+
     let aValue: any = a[key as keyof Collection];
     let bValue: any = b[key as keyof Collection];
 
     if (key === "productCount") {
-        aValue = a.products?.length || 0;
-        bValue = b.products?.length || 0;
+      aValue = a.products?.length || 0;
+      bValue = b.products?.length || 0;
     }
 
     if (aValue < bValue) return direction === "asc" ? -1 : 1;
@@ -226,7 +307,7 @@ export default function CategoriesPage() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(new Set(collections.map(c => c.id)));
+      setSelectedIds(new Set(collections.map((c) => c.id)));
     } else {
       setSelectedIds(new Set());
     }
@@ -242,41 +323,46 @@ export default function CategoriesPage() {
     setSelectedIds(newSet);
   };
 
-  const isAllSelected = collections.length > 0 && selectedIds.size === collections.length;
-  const isSomeSelected = selectedIds.size > 0 && selectedIds.size < collections.length;
+  const isAllSelected =
+    collections.length > 0 && selectedIds.size === collections.length;
+  const isSomeSelected =
+    selectedIds.size > 0 && selectedIds.size < collections.length;
 
   return (
     <div className="space-y-4 font-sans h-full flex flex-col">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-playfair font-medium tracking-tight text-emerald-950 dark:text-white">Categories</h1>
-        <p className="text-gray-500 dark:text-zinc-400 mt-1 text-sm font-inter">Manage and organize your product types.</p>
+        <h1 className="text-3xl font-playfair font-medium tracking-tight text-foreground">
+          Categories
+        </h1>
+        <p className="text-gray-500 dark:text-zinc-400 mt-1 text-sm font-inter">
+          Manage and organize your product types.
+        </p>
       </div>
 
-     {/* Table Filters & buttons */}
+      {/* Table Filters & buttons */}
       <div className="py-3 flex items-center justify-between gap-3">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-zinc-500" />
-            <input
-                placeholder="Search categories..."
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="w-full bg-transparent pl-10 pr-4 py-2 text-sm placeholder:text-gray-400 dark:placeholder:text-zinc-500 text-gray-900 dark:text-white border-b-2 border-gray-300 dark:border-zinc-700 focus:outline-none focus:border-black dark:focus:border-white transition-colors"
-            />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            placeholder="Search categories..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-full bg-transparent pl-10 pr-4 py-2 text-sm placeholder:text-muted-foreground text-foreground border-b-2 border-border focus:outline-none focus:border-primary transition-colors"
+          />
         </div>
 
         {/* Add Button */}
-        <Button 
-            onClick={() => setCreateOpen(true)}
-            size="sm"
-            className="h-9 px-4 bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-zinc-200 rounded-md text-sm font-medium transition-colors"
+        <Button
+          onClick={() => setCreateOpen(true)}
+          size="sm"
+          className="h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors"
         >
-            <Plus className="h-4 w-4 mr-1.5" />
-            Create Category
+          <Plus className="h-4 w-4 mr-1.5" />
+          Create Category
         </Button>
       </div>
-
 
       {/* Table Content */}
       <div className="flex-1 overflow-hidden">
@@ -285,109 +371,152 @@ export default function CategoriesPage() {
         ) : error ? (
           <div className="text-center py-12">
             <p className="text-red-500 mb-3 text-sm">{error}</p>
-            <Button variant="outline" size="sm" onClick={() => fetchCollections()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchCollections()}
+            >
               Try Again
             </Button>
           </div>
         ) : collections.length === 0 ? (
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-8 text-center">
-            <p className="text-gray-500 dark:text-zinc-400 text-sm">No categories found matching your search.</p>
+          <div className="bg-card rounded-xl border border-border p-8 text-center">
+            <p className="text-muted-foreground text-sm">
+              No categories found matching your search.
+            </p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
+          <div className="bg-card rounded-xl border border-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50/80 dark:bg-zinc-800/50 border-b border-gray-200 dark:border-zinc-800">
+                <thead className="bg-muted/50 border-b border-border">
                   <tr>
                     <th className="w-12 px-4 py-4">
-                      <Checkbox 
+                      <Checkbox
                         checked={isAllSelected}
                         onCheckedChange={handleSelectAll}
                         className="data-[state=checked]:bg-black dark:data-[state=checked]:bg-white data-[state=checked]:border-black dark:data-[state=checked]:border-white"
-                        {...(isSomeSelected ? { "data-state": "indeterminate" } : {})}
+                        {...(isSomeSelected
+                          ? { "data-state": "indeterminate" }
+                          : {})}
                       />
                     </th>
-                    <th 
-                      className="text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider px-4 py-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors select-none"
+                    <th
+                      className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-4 cursor-pointer hover:bg-accent transition-colors select-none"
                       onClick={() => handleSort("title")}
                     >
                       <div className="flex items-center gap-1.5">
                         Name
                         {sortConfig?.key === "title" ? (
-                          sortConfig.direction === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                          sortConfig.direction === "asc" ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )
                         ) : (
                           <ChevronsUpDown className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
                         )}
                       </div>
                     </th>
-                    <th className="text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider px-4 py-4">Description</th>
-                    <th 
-                      className="text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider px-4 py-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors select-none"
+                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-4">
+                      Description
+                    </th>
+                    <th
+                      className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-4 cursor-pointer hover:bg-accent transition-colors select-none"
                       onClick={() => handleSort("productCount")}
                     >
                       <div className="flex items-center gap-1.5">
                         Products
                         {sortConfig?.key === "productCount" ? (
-                          sortConfig.direction === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                          sortConfig.direction === "asc" ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )
                         ) : (
-                          <ChevronsUpDown className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
+                          <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
                         )}
                       </div>
                     </th>
-                    <th 
-                      className="text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider px-4 py-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors select-none"
+                    <th
+                      className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-4 cursor-pointer hover:bg-accent transition-colors select-none"
                       onClick={() => handleSort("createdAt")}
                     >
                       <div className="flex items-center gap-1.5">
                         Created
                         {sortConfig?.key === "createdAt" ? (
-                          sortConfig.direction === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                          sortConfig.direction === "asc" ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )
                         ) : (
-                          <ChevronsUpDown className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
+                          <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
                         )}
                       </div>
                     </th>
-                    <th className="text-right text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider px-4 py-4">Actions</th>
+                    <th className="text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-4">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                <tbody className="divide-y divide-border">
                   {sortedCollections.map((c) => (
-                    <tr key={c.id} className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <tr
+                      key={c.id}
+                      className="hover:bg-muted/50 transition-colors"
+                    >
                       <td className="px-4 py-4">
-                        <Checkbox 
+                        <Checkbox
                           checked={selectedIds.has(c.id)}
-                          onCheckedChange={(checked) => handleSelectOne(c.id, checked as boolean)}
+                          onCheckedChange={(checked) =>
+                            handleSelectOne(c.id, checked as boolean)
+                          }
                           className="data-[state=checked]:bg-black dark:data-[state=checked]:bg-white data-[state=checked]:border-black dark:data-[state=checked]:border-white"
                         />
                       </td>
                       <td className="px-4 py-4">
-                        <span className="font-medium text-gray-900 dark:text-white text-sm">{c.title}</span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="text-gray-500 dark:text-zinc-400 text-sm truncate max-w-[200px] block" title={c.description}>
-                          {c.description || '-'}
+                        <span className="font-medium text-foreground text-sm">
+                          {c.title}
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300">
+                        <span
+                          className="text-muted-foreground text-sm truncate max-w-[200px] block"
+                          title={c.description}
+                        >
+                          {c.description || "-"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
                           {c.products?.length || 0}
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <span className="text-gray-500 dark:text-zinc-400 text-sm">
-                          {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-'}
+                        <span className="text-muted-foreground text-sm">
+                          {c.createdAt
+                            ? new Date(c.createdAt).toLocaleDateString()
+                            : "-"}
                         </span>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-end gap-2">
-                          <button 
-                            className="p-1.5 text-gray-400 dark:text-zinc-500 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+                          <button
+                            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                            onClick={() => openManageProducts(c)}
+                            title="Manage Products"
+                          >
+                            <Package className="h-4 w-4" />
+                          </button>
+                          <button
+                            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
                             onClick={() => openEditDialog(c)}
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
-                          <button 
-                            className="p-1.5 text-gray-400 dark:text-zinc-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                          <button
+                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
                             onClick={() => openDeleteDialog(c)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -403,12 +532,11 @@ export default function CategoriesPage() {
         )}
       </div>
 
-      
       {/* Pagination - Simplified and moved near controls if needed, or kept separate */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between mt-2">
-             {/* ... (Kept simple or removed if minimal design prefers just load more/scroll) */}
-             {/* Keeping basic pagination for now but hidden if not needed or could be part of footer */}
+          {/* ... (Kept simple or removed if minimal design prefers just load more/scroll) */}
+          {/* Keeping basic pagination for now but hidden if not needed or could be part of footer */}
         </div>
       )}
 
@@ -416,7 +544,9 @@ export default function CategoriesPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-playfair text-2xl">New Category</DialogTitle>
+            <DialogTitle className="font-playfair text-2xl">
+              New Category
+            </DialogTitle>
             <DialogDescription>
               Create a new category to organize your products.
             </DialogDescription>
@@ -452,10 +582,10 @@ export default function CategoriesPage() {
             >
               Cancel
             </Button>
-            <Button 
-                onClick={handleCreate} 
-                disabled={formLoading || !formTitle.trim()}
-                className="bg-black text-white hover:bg-gray-900 rounded-sm"
+            <Button
+              onClick={handleCreate}
+              disabled={formLoading || !formTitle.trim()}
+              className="bg-black text-white hover:bg-gray-900 rounded-sm"
             >
               {formLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Category
@@ -464,30 +594,82 @@ export default function CategoriesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
+      {/* Edit Dialog - Enhanced with Image Upload */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle className="font-playfair text-2xl">Edit Category</DialogTitle>
+            <DialogTitle className="font-playfair text-2xl">
+              Edit Category
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-title">Title</Label>
-              <Input
-                id="edit-title"
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-                className="border-gray-200 focus:ring-0 focus:border-black rounded-sm"
-              />
-            </div>
-             <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-                className="border-gray-200 focus:ring-0 focus:border-black rounded-sm resize-none"
-              />
+          <div className="grid gap-6 py-4">
+            <div className="flex items-start gap-6">
+              {/* Image Section */}
+              <div className="w-32 flex-shrink-0">
+                <Label className="mb-2 block">Cover Image</Label>
+                <div className="relative aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center bg-muted/20 overflow-hidden group">
+                  {selectedCollection?.image || selectedCollection?.imageId ? (
+                    // Using image ID or URL placeholder logic
+                    <div className="w-full h-full relative">
+                      <img
+                        src={
+                          selectedCollection.image || "https://placehold.co/150"
+                        }
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={handleRemoveImage}
+                        className="absolute top-1 right-1 bg-destructive text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center p-2">
+                      <Upload className="h-6 w-6 mx-auto text-muted-foreground mb-1" />
+                      <span className="text-[10px] text-muted-foreground">
+                        Upload
+                      </span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                  />
+                  {uploadingImage && (
+                    <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Fields */}
+              <div className="flex-1 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-title">Title</Label>
+                  <Input
+                    id="edit-title"
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    className="rounded-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={formDescription}
+                    onChange={(e) => setFormDescription(e.target.value)}
+                    className="rounded-sm resize-none"
+                    rows={3}
+                  />
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -495,14 +677,14 @@ export default function CategoriesPage() {
               variant="ghost"
               onClick={() => setEditOpen(false)}
               disabled={formLoading}
-              className="hover:bg-gray-100 rounded-sm"
+              className="rounded-sm"
             >
               Cancel
             </Button>
-            <Button 
-                onClick={handleEdit} 
-                disabled={formLoading || !formTitle.trim()}
-                 className="bg-black text-white hover:bg-gray-900 rounded-sm"
+            <Button
+              onClick={handleEdit}
+              disabled={formLoading || !formTitle.trim()}
+              className="bg-primary text-primary-foreground rounded-sm"
             >
               {formLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
@@ -511,19 +693,121 @@ export default function CategoriesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Manage Products Dialog */}
+      <Dialog open={manageProductsOpen} onOpenChange={setManageProductsOpen}>
+        <DialogContent className="sm:max-w-2xl h-[600px] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              Manage Products in {selectedCollection?.title}
+            </DialogTitle>
+            <DialogDescription>
+              Add or remove products from this category.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto py-4">
+            {loading ? (
+              <PageLoader />
+            ) : (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center bg-muted/30 p-2 rounded-md">
+                  <h4 className="text-sm font-medium">
+                    Products ({collectionProducts.length})
+                  </h4>
+                  {/* Add search or add button logic here if needed */}
+                </div>
+
+                {collectionProducts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    No products in this category.
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    {collectionProducts.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between p-2 border rounded-md hover:bg-muted/50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 bg-muted rounded flex items-center justify-center">
+                            {p.images?.[0]?.url ? (
+                              <img
+                                src={p.images[0].url}
+                                className="h-full w-full object-cover rounded"
+                                alt=""
+                              />
+                            ) : (
+                              <Package className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">{p.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              ${p.price}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={async () => {
+                            if (!selectedCollection) return;
+                            if (!confirm("Remove this product?")) return;
+                            try {
+                              await collectionsAPI.removeProduct(
+                                selectedCollection.id,
+                                p.id
+                              );
+                              // Refresh list
+                              const res = await collectionsAPI.getProducts(
+                                selectedCollection.id,
+                                { limit: 100 }
+                              );
+                              if (res.success)
+                                setCollectionProducts(
+                                  res.data.map(
+                                    (item: any) => item.product || item
+                                  )
+                                );
+                            } catch (err) {
+                              console.error(err);
+                            }
+                          }}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-playfair">Delete Category?</AlertDialogTitle>
+            <AlertDialogTitle className="font-playfair">
+              Delete Category?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete <span className="font-medium text-black">&quot;{selectedCollection?.title}&quot;</span>.
+              This will permanently delete{" "}
+              <span className="font-medium text-black">
+                &quot;{selectedCollection?.title}&quot;
+              </span>
+              .
               <br />
-              Products in this category will not be deleted but will be uncategorized.
+              Products in this category will not be deleted but will be
+              uncategorized.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={formLoading} className="rounded-sm">Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={formLoading} className="rounded-sm">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={formLoading}
@@ -538,4 +822,3 @@ export default function CategoriesPage() {
     </div>
   );
 }
-

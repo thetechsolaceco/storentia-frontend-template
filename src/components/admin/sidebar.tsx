@@ -23,16 +23,66 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const sidebarItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/storentia/dashboard", enabled: true },
-  { icon: Tags, label: "Categories", href: "/storentia/dashboard/categories", enabled: true },
-  { icon: Package, label: "Products", href: "/storentia/dashboard/products", enabled: true },
-  { icon: ShoppingCart, label: "Orders", href: "/storentia/dashboard/orders", enabled: false },
-  { icon: Users, label: "Customers", href: "/storentia/dashboard/customers", enabled: false },
-  { icon: Percent, label: "Coupons", href: "/storentia/dashboard/coupons", enabled: false },
-  { icon: ImageIcon, label: "Banners", href: "/storentia/dashboard/banners", enabled: false },
-  { icon: MessageSquare, label: "Testimonials", href: "/storentia/dashboard/testimonials", enabled: false },
-  { icon: FileText, label: "Reports", href: "/storentia/dashboard/reports", enabled: false },
-  { icon: Settings, label: "Settings", href: "/storentia/dashboard/settings", enabled: true },
+  {
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    href: "/storentia/dashboard",
+    enabled: true,
+  },
+  {
+    icon: Tags,
+    label: "Categories",
+    href: "/storentia/dashboard/categories",
+    enabled: true,
+  },
+  {
+    icon: Package,
+    label: "Products",
+    href: "/storentia/dashboard/products",
+    enabled: true,
+  },
+  {
+    icon: ShoppingCart,
+    label: "Orders",
+    href: "/storentia/dashboard/orders",
+    enabled: false,
+  },
+  {
+    icon: Users,
+    label: "Customers",
+    href: "/storentia/dashboard/customers",
+    enabled: false,
+  },
+  {
+    icon: Percent,
+    label: "Coupons",
+    href: "/storentia/dashboard/coupons",
+    enabled: false,
+  },
+  {
+    icon: ImageIcon,
+    label: "Banners",
+    href: "/storentia/dashboard/banners",
+    enabled: false,
+  },
+  {
+    icon: MessageSquare,
+    label: "Testimonials",
+    href: "/storentia/dashboard/testimonials",
+    enabled: false,
+  },
+  {
+    icon: FileText,
+    label: "Reports",
+    href: "/storentia/dashboard/reports",
+    enabled: false,
+  },
+  {
+    icon: Settings,
+    label: "Settings",
+    href: "/storentia/dashboard/settings",
+    enabled: true,
+  },
 ];
 
 interface AdminSidebarProps {
@@ -45,30 +95,44 @@ export function AdminSidebar({ collapsed, setCollapsed }: AdminSidebarProps) {
   const { logout } = useAuth();
 
   return (
-    <aside 
-        className={cn(
-            "fixed left-3 top-3 h-[calc(100vh-24px)] bg-white dark:bg-black z-40 transition-all duration-300 flex flex-col rounded-3xl overflow-hidden",
-            collapsed ? "w-[68px]" : "w-[232px]"
-        )}
+    <aside
+      className={cn(
+        "fixed left-0 top-0 h-screen z-40 transition-all duration-300 flex flex-col bg-sidebar border-r border-sidebar-border",
+        collapsed ? "w-[68px]" : "w-[232px]"
+      )}
     >
       {/* Header */}
-      <div className={cn("h-16 flex items-center border-b border-gray-200 dark:border-zinc-800", collapsed ? "justify-center" : "justify-between px-4")}>
-        {!collapsed && (
-            <div className="flex items-center gap-3 overflow-hidden whitespace-nowrap">
-                <div className="h-8 w-8 bg-black dark:bg-white rounded-lg flex items-center justify-center shrink-0">
-                    <Store className="h-4 w-4 text-white dark:text-black" />
-                </div>
-                <span className="font-playfair font-bold text-lg text-black dark:text-white">Storentia</span>
-            </div>
+      <div
+        className={cn(
+          "h-16 flex items-center border-b border-sidebar-border",
+          collapsed ? "justify-center" : "justify-between px-4"
         )}
-        
+      >
+        {!collapsed && (
+          <div className="flex items-center gap-3 overflow-hidden whitespace-nowrap">
+            <div className="h-8 w-8 bg-sidebar-primary text-sidebar-primary-foreground rounded-lg flex items-center justify-center shrink-0">
+              <Store className="h-4 w-4" />
+            </div>
+            <span className="font-playfair font-bold text-lg text-sidebar-foreground">
+              Storentia
+            </span>
+          </div>
+        )}
+
         <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setCollapsed(!collapsed)}
-            className={cn("text-gray-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800", collapsed && "h-10 w-10")}
+          variant="ghost"
+          size="icon"
+          onClick={() => setCollapsed(!collapsed)}
+          className={cn(
+            "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+            collapsed && "h-10 w-10"
+          )}
         >
-            {collapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+          {collapsed ? (
+            <PanelLeftOpen className="h-5 w-5" />
+          ) : (
+            <PanelLeftClose className="h-5 w-5" />
+          )}
         </Button>
       </div>
 
@@ -84,21 +148,23 @@ export function AdminSidebar({ collapsed, setCollapsed }: AdminSidebarProps) {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
                     isActive
-                      ? "bg-gray-100 dark:bg-zinc-800 text-black dark:text-white"
-                      : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 hover:text-black dark:hover:text-white",
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                     collapsed && "justify-center px-2"
                   )}
                   title={collapsed ? item.label : undefined}
                 >
                   <item.icon
                     className={cn(
-                      "h-5 w-5 shrink-0",
+                      "h-5 w-5 shrink-0 transition-colors",
                       isActive
-                        ? "text-black dark:text-white"
-                        : "text-gray-500 dark:text-zinc-500 group-hover:text-gray-700 dark:group-hover:text-zinc-300"
+                        ? "text-sidebar-primary"
+                        : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"
                     )}
                   />
-                  {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+                  {!collapsed && (
+                    <span className="text-sm font-medium">{item.label}</span>
+                  )}
                 </div>
               </Link>
             );
@@ -106,17 +172,19 @@ export function AdminSidebar({ collapsed, setCollapsed }: AdminSidebarProps) {
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200 dark:border-zinc-800">
+      <div className="p-4 border-t border-sidebar-border">
         <Button
           variant="ghost"
           onClick={logout}
           className={cn(
-            "w-full text-gray-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 justify-start",
+            "w-full text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent justify-start",
             collapsed && "justify-center px-2"
           )}
         >
           <LogOut className="h-5 w-5 shrink-0" />
-          {!collapsed && <span className="ml-3 text-sm font-medium">Logout</span>}
+          {!collapsed && (
+            <span className="ml-3 text-sm font-medium">Logout</span>
+          )}
         </Button>
       </div>
     </aside>

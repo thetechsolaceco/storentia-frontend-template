@@ -5,7 +5,10 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+});
 
 export const metadata: Metadata = {
   title: "Storentia - Premium Ecommerce",
@@ -20,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${playfair.variable} font-sans min-h-screen flex flex-col antialiased bg-black`}
+        className={`${inter.variable} ${playfair.variable} font-sans min-h-screen flex flex-col antialiased`}
         suppressHydrationWarning
       >
         <AuthProvider>
