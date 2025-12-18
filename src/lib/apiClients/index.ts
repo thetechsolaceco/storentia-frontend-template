@@ -21,20 +21,6 @@ export {
   type UserResponse,
 } from "./auth";
 
-export { collectionsAPI, type Collection, type CollectionParams, type CollectionsResponse, type CollectionResponse, type Pagination } from "./collections";
-export {
-  productsAPI,
-  type Product,
-  type ProductParams,
-  type ProductsResponse,
-  type ProductResponse,
-  type ProductImage,
-  type ProductStatus,
-  type CreateProductData,
-  type UpdateProductData,
-} from "./products";
-export { billingsAPI, type Billing, type BillingParams } from "./billings";
-export { discountsAPI, type Discount, type DiscountParams } from "./discounts";
 export { usersAPI, type UserAccount, type UserParams } from "./users";
 
 export { fetchWithCredentials, fetchWithApiKey, BASE_URL } from "./shared";

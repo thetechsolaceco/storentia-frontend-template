@@ -1,6 +1,5 @@
 import { BASE_URL } from "../shared";
 import { getStoreData } from "../auth";
-
 export interface UserProfile {
   id: string;
   name: string | null;
