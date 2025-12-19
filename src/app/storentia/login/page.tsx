@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { authAPI } from "@/lib/apiClients";
 import { useAuth } from "@/components/providers/auth-provider";
-import { Eye, EyeOff, Github } from "lucide-react";
+import { Github, Loader2 } from "lucide-react";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -30,33 +30,20 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-function FacebookIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="0"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path
-        fill="#1877F2"
-        d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.791-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
-      />
-    </svg>
-  );
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
+  const errorParam = searchParams.get("error");
+
   const { setUserData } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
+
+  const [isChecking, setIsChecking] = useState(true);
+  const [step, setStep] = useState<"EMAIL" | "OTP">("EMAIL");
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(errorParam);
+  const [resendTimer, setResendTimer] = useState(0);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -77,8 +64,80 @@ export default function LoginPage() {
     checkAuth();
   }, [router, setUserData]);
 
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setInterval(() => setResendTimer((t) => t - 1), 1000);
+      return () => clearInterval(timer);
+    }
+  }, [resendTimer]);
+
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const handleSendOtp = async () => {
+    setError(null);
+    if (!email) {
+      setError("Email is required");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await authAPI.sendOtp(email);
+      if (response.success) {
+        setStep("OTP");
+        setResendTimer(30); // 30 seconds cooldown
+        // Automatically fill OTP for testing/demo if provided in response,
+        // but traditionally we wouldn't unless it's dev env.
+        // Given the request showed response with OTP, it might be returned.
+        if (response.data?.otp) {
+          console.log("OTP Received:", response.data.otp);
+          // Optionally pre-fill for convenience if desired, but user didn't ask to prefill.
+        }
+      } else {
+        setError(response.message || "Failed to send OTP");
+      }
+    } catch {
+      setError("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    setError(null);
+    if (!otp) {
+      setError("OTP is required");
+      return;
+    }
+    if (otp.length < 6) {
+      setError("OTP must be 6 digits");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await authAPI.verifyOtp(email, otp);
+      if (response.success && response.data?.user) {
+        setUserData(response.data.user);
+        router.replace("/storentia/dashboard");
+      } else {
+        setError(response.message || "Invalid OTP");
+      }
+    } catch {
+      setError("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleGoogleLogin = () => {
-    setIsRedirecting(true);
     authAPI.initiateGoogleAuth();
   };
 
@@ -101,49 +160,126 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-card/80 backdrop-blur-xl rounded-3xl border border-border/50 shadow-xl" />
 
         <div className="relative z-20 flex flex-col items-center">
-          <h1 className="font-playfair text-4xl text-foreground font-medium mb-12 tracking-tight text-center mt-4">
-            Welcome Back
+          <h1 className="font-playfair text-4xl text-foreground font-medium mb-2 tracking-tight text-center mt-4">
+            {step === "EMAIL" ? "Welcome Back" : "Verify Email"}
           </h1>
+          <p className="text-muted-foreground text-center mb-10 text-sm">
+            {step === "EMAIL"
+              ? "Enter your email to sign in or create an account"
+              : `We sent a code to ${email}`}
+          </p>
 
           <div className="w-full space-y-6">
-            {/* Email Input */}
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground font-medium ml-1">
-                Email address
-              </label>
-              <div className="relative group">
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  className="w-full bg-background text-foreground border border-input rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-all placeholder:text-muted-foreground/60"
-                />
-              </div>
-            </div>
+            {step === "EMAIL" ? (
+              /* Email Input Step */
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground font-medium ml-1">
+                    Email address
+                  </label>
+                  <div className="relative group">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
+                      placeholder="you@example.com"
+                      className="w-full bg-background text-foreground border border-input rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-all placeholder:text-muted-foreground/60"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
 
-            {/* Password Input */}
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground font-medium ml-1">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••••"
-                  className="w-full bg-background text-foreground border border-input rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-all placeholder:text-muted-foreground/60 pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
+                {error && (
+                  <div className="text-xs text-red-500 ml-1 font-medium">
+                    {error}
+                  </div>
+                )}
+
+                <Button
+                  className="w-full h-12 rounded-xl text-base font-medium"
+                  onClick={handleSendOtp}
+                  disabled={isLoading}
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending OTP...
+                    </>
                   ) : (
-                    <Eye className="w-4 h-4" />
+                    "Continue with Email"
                   )}
-                </button>
+                </Button>
               </div>
-            </div>
+            ) : (
+              /* OTP Input Step */
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground font-medium ml-1">
+                    Enter OTP
+                  </label>
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => {
+                        // Only allow numbers
+                        const val = e.target.value.replace(/\D/g, "");
+                        if (val.length <= 6) setOtp(val);
+                      }}
+                      onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
+                      placeholder="000000"
+                      className="w-full bg-background text-foreground border border-input rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-all placeholder:text-muted-foreground/60 tracking-widest text-center text-lg"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="text-xs text-red-500 ml-1 font-medium text-center">
+                    {error}
+                  </div>
+                )}
+
+                <Button
+                  className="w-full h-12 rounded-xl text-base font-medium"
+                  onClick={handleVerifyOtp}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    "Verify & Login"
+                  )}
+                </Button>
+
+                <div className="flex items-center justify-between text-xs mt-4">
+                  <button
+                    onClick={() => setStep("EMAIL")}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    disabled={isLoading}
+                  >
+                    Change Email
+                  </button>
+                  <button
+                    onClick={handleSendOtp}
+                    className={`font-medium transition-colors ${
+                      resendTimer > 0
+                        ? "text-muted-foreground cursor-not-allowed"
+                        : "text-primary hover:text-primary/80"
+                    }`}
+                    disabled={isLoading || resendTimer > 0}
+                  >
+                    {resendTimer > 0
+                      ? `Resend in ${resendTimer}s`
+                      : "Resend OTP"}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Divider */}
             <div className="relative py-4">
@@ -162,14 +298,16 @@ export default function LoginPage() {
               <Button
                 variant="outline"
                 className="h-12 bg-background border-border hover:bg-accent hover:text-accent-foreground rounded-full gap-2 transition-all"
-                onClick={() => handleGoogleLogin()}
+                onClick={handleGoogleLogin}
+                disabled={isLoading}
               >
                 <GoogleIcon className="w-5 h-5" />
                 Google
               </Button>
               <Button
                 variant="outline"
-                className="h-12 bg-background border-border hover:bg-accent hover:text-accent-foreground rounded-full gap-2 transition-all"
+                className="h-12 bg-background border-border hover:bg-accent hover:text-accent-foreground rounded-full gap-2 transition-all opacity-50 cursor-not-allowed"
+                disabled
               >
                 <Github className="w-5 h-5" />
                 Github

@@ -57,6 +57,23 @@ export interface AuthResponse {
   user?: User;
 }
 
+export interface SendOtpResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    email: string;
+    otp: string;
+  };
+}
+
+export interface VerifyOtpResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    user: User;
+  };
+}
+
 export const authAPI = {
   async validateKey(apiKey: string): Promise<ValidationResponse> {
     try {
@@ -74,6 +91,43 @@ export const authAPI = {
       return {
         success: false,
         message: error instanceof Error ? error.message : "Network error occurred",
+      };
+    }
+  },
+
+  async sendOtp(email: string): Promise<SendOtpResponse> {
+    try {
+      const response = await fetch(`${BASE_URL}${API_ENDPOINTS.AUTH_SEND_OTP}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+      return await response.json();
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to send OTP",
+      };
+    }
+  },
+
+  async verifyOtp(email: string, otp: string): Promise<VerifyOtpResponse> {
+    try {
+      const response = await fetch(`${BASE_URL}${API_ENDPOINTS.AUTH_VERIFY_OTP}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, otp }),
+        credentials: "include",
+      });
+      return await response.json();
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to verify OTP",
       };
     }
   },

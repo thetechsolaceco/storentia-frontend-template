@@ -15,6 +15,8 @@ import {
   UserCircle,
   Info,
   Mail,
+  ShoppingBag,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,12 +42,16 @@ import {
   getStoreUser,
   logout,
 } from "@/lib/apiClients/store/authentication";
+import { storeAPI, type StoreProduct } from "@/lib/apiClients";
 
 export function Header() {
   const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<StoreProduct[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const router = useRouter();
 
   const handleSearch = (e: React.FormEvent) => {
@@ -88,6 +94,38 @@ export function Header() {
       window.removeEventListener("auth-change", handleAuthChange);
     };
   }, []);
+
+  useEffect(() => {
+    const searchProducts = async () => {
+      if (!query.trim()) {
+        setSearchResults([]);
+        setShowDropdown(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const response = await storeAPI.getPublicProducts({
+          search: query,
+          limit: 5,
+        });
+        if (response.success && response.data) {
+          setSearchResults(response.data);
+          // Only show dropdown if we have query
+          if (query.trim()) {
+            setShowDropdown(true);
+          }
+        }
+      } catch (error) {
+        console.error("Search error:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchProducts, 300);
+    return () => clearTimeout(timeoutId);
+  }, [query]);
 
   const handleLogout = async () => {
     await logout();
@@ -134,15 +172,37 @@ export function Header() {
                         </Link>
                       </SheetClose>
                       {isUserAuthenticated && (
-                        <SheetClose asChild>
-                          <Link
-                            href="/profile"
-                            className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-muted transition-colors"
-                          >
-                            <UserCircle className="h-5 w-5 text-muted-foreground" />
-                            <span className="font-medium">Profile</span>
-                          </Link>
-                        </SheetClose>
+                        <>
+                          <SheetClose asChild>
+                            <Link
+                              href="/profile"
+                              className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-muted transition-colors"
+                            >
+                              <UserCircle className="h-5 w-5 text-muted-foreground" />
+                              <span className="font-medium">Profile</span>
+                            </Link>
+                          </SheetClose>
+                          <SheetClose asChild>
+                            <Link
+                              href="/profile"
+                              className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-muted transition-colors"
+                            >
+                              <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+                              <span className="font-medium">My Orders</span>
+                            </Link>
+                          </SheetClose>
+                          <SheetClose asChild>
+                            <Link
+                              href="/profile"
+                              className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-muted transition-colors"
+                            >
+                              <MapPin className="h-5 w-5 text-muted-foreground" />
+                              <span className="font-medium">
+                                Saved Addresses
+                              </span>
+                            </Link>
+                          </SheetClose>
+                        </>
                       )}
                       <SheetClose asChild>
                         <Link
@@ -267,16 +327,74 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex relative w-full max-w-sm items-center">
+          <div className="hidden md:flex relative w-full max-w-sm items-center group">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <form onSubmit={handleSearch} className="w-full">
+            <form onSubmit={handleSearch} className="w-full relative">
               <Input
                 type="search"
                 placeholder="Search products..."
                 className="w-full pl-8 rounded-full bg-muted"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => {
+                  if (query.trim()) setShowDropdown(true);
+                }}
+                onBlur={() => {
+                  // Delay hiding dropdown to allow clicking links
+                  setTimeout(() => setShowDropdown(false), 200);
+                }}
               />
+
+              {/* Search Dropdown */}
+              {showDropdown && query.trim() !== "" && (
+                <div className="absolute top-full mt-2 w-full bg-background rounded-xl border border-border shadow-lg overflow-hidden py-2 z-50">
+                  {isSearching ? (
+                    <div className="px-4 py-3 text-sm text-center text-muted-foreground">
+                      Searching...
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="max-h-[300px] overflow-y-auto">
+                      <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Products
+                      </div>
+                      {searchResults.map((product) => (
+                        <Link
+                          key={product.id}
+                          href={`/products/${product.id}`}
+                          className="flex items-center gap-3 px-3 py-2 hover:bg-muted transition-colors"
+                          onClick={() => setShowDropdown(false)}
+                        >
+                          <div className="h-10 w-10 rounded-md bg-muted overflow-hidden flex-shrink-0">
+                            {product.images?.[0]?.url ? (
+                              <img
+                                src={product.images[0].url}
+                                alt={product.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                                <Package className="h-5 w-5" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-medium text-foreground truncate">
+                              {product.title}
+                            </h4>
+                            <p className="text-xs text-muted-foreground">
+                              ${product.price.toFixed(2)}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-center text-muted-foreground">
+                      No products found
+                    </div>
+                  )}
+                </div>
+              )}
             </form>
           </div>
           <ModeToggle />
@@ -316,6 +434,12 @@ export function Header() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/profile">Profile</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile">My Orders</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile">Saved Addresses</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -37,37 +37,45 @@ import {
   type UserProfile,
 } from "@/lib/apiClients";
 
+import { useRouter } from "next/navigation";
+import { isAuthenticated } from "@/lib/apiClients/store/authentication";
+
 export default function ProfilePage() {
+  const router = useRouter();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [userLoading, setUserLoading] = useState(true);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: '', avatar: '' });
+  const [profileForm, setProfileForm] = useState({ name: "", avatar: "" });
   const [addressSaving, setAddressSaving] = useState(false);
 
   // Form state for new/edit address
   const [formData, setFormData] = useState<CreateAddressRequest>({
-    firstName: '',
-    lastName: '',
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    country: 'USA',
-    phone: '',
+    firstName: "",
+    lastName: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "USA",
+    phone: "",
     isDefault: false,
   });
 
   useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push("/login");
+      return;
+    }
     loadUser();
     loadAddresses();
-  }, []);
+  }, [router]);
 
   const loadUser = async () => {
     setUserLoading(true);
@@ -75,15 +83,15 @@ export default function ProfilePage() {
       const result = await getUserProfile();
       if (result.success && result.data) {
         // Handle both { user: ... } and direct user object response formats
-        const userData = 'user' in result.data ? result.data.user : result.data;
+        const userData = "user" in result.data ? result.data.user : result.data;
         setUser(userData as UserProfile);
         setProfileForm({
-          name: userData.name || '',
-          avatar: userData.avatar || '',
+          name: userData.name || "",
+          avatar: userData.avatar || "",
         });
       }
     } catch (error) {
-      console.error('Failed to load user profile:', error);
+      console.error("Failed to load user profile:", error);
     } finally {
       setUserLoading(false);
     }
@@ -96,17 +104,17 @@ export default function ProfilePage() {
         name: profileForm.name,
         avatar: profileForm.avatar || undefined,
       });
-      
+
       if (result.success) {
         // Reload user data
         await loadUser();
         setIsEditProfileOpen(false);
-        setError('');
+        setError("");
       } else {
-        setError(result.error || 'Failed to update profile');
+        setError(result.error || "Failed to update profile");
       }
     } catch (error) {
-      setError('An error occurred while updating profile');
+      setError("An error occurred while updating profile");
     } finally {
       setProfileSaving(false);
     }
@@ -116,17 +124,17 @@ export default function ProfilePage() {
     try {
       setLoading(true);
       const result = await getAllAddresses();
-      
+
       if (result.success && result.data) {
         const addressData = Array.isArray(result.data) ? result.data : [];
         setAddresses(addressData);
       } else {
         setAddresses([]);
-        setError(result.error || 'Failed to load addresses');
+        setError(result.error || "Failed to load addresses");
       }
     } catch (error) {
       setAddresses([]);
-      setError('An error occurred while loading addresses');
+      setError("An error occurred while loading addresses");
     } finally {
       setLoading(false);
     }
@@ -136,17 +144,17 @@ export default function ProfilePage() {
     setAddressSaving(true);
     try {
       const result = await createAddress(formData);
-      
+
       if (result.success) {
         setIsAddDialogOpen(false);
         resetForm();
-        setError('');
+        setError("");
         loadAddresses();
       } else {
-        setError(result.error || 'Failed to create address');
+        setError(result.error || "Failed to create address");
       }
     } catch (error) {
-      setError('An error occurred while creating address');
+      setError("An error occurred while creating address");
     } finally {
       setAddressSaving(false);
     }
@@ -154,64 +162,64 @@ export default function ProfilePage() {
 
   const handleUpdateAddress = async () => {
     if (!editingAddress?.id) return;
-    
+
     try {
       const result = await updateAddress(editingAddress.id, formData);
-      
+
       if (result.success) {
         setEditingAddress(null);
         resetForm();
-        setError('');
+        setError("");
         loadAddresses();
       } else {
-        setError(result.error || 'Failed to update address');
+        setError(result.error || "Failed to update address");
       }
     } catch (error) {
-      setError('An error occurred while updating address');
+      setError("An error occurred while updating address");
     }
   };
 
   const handleDeleteAddress = async (addressId: string) => {
-    if (!confirm('Are you sure you want to delete this address?')) return;
-    
+    if (!confirm("Are you sure you want to delete this address?")) return;
+
     try {
       const result = await deleteAddress(addressId);
-      
+
       if (result.success) {
         loadAddresses();
       } else {
-        setError(result.error || 'Failed to delete address');
+        setError(result.error || "Failed to delete address");
       }
     } catch (error) {
-      setError('An error occurred while deleting address');
+      setError("An error occurred while deleting address");
     }
   };
 
   const handleSetDefault = async (addressId: string) => {
     try {
       const result = await setDefaultAddress(addressId);
-      
+
       if (result.success) {
         loadAddresses();
       } else {
-        setError(result.error || 'Failed to set default address');
+        setError(result.error || "Failed to set default address");
       }
     } catch (error) {
-      setError('An error occurred while setting default address');
+      setError("An error occurred while setting default address");
     }
   };
 
   const resetForm = () => {
     setFormData({
-      firstName: '',
-      lastName: '',
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      postalCode: '',
-      country: 'USA',
-      phone: '',
+      firstName: "",
+      lastName: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      country: "USA",
+      phone: "",
       isDefault: false,
     });
   };
@@ -222,7 +230,7 @@ export default function ProfilePage() {
       firstName: address.address.firstName,
       lastName: address.address.lastName,
       addressLine1: address.address.addressLine1,
-      addressLine2: address.address.addressLine2 || '',
+      addressLine2: address.address.addressLine2 || "",
       city: address.address.city,
       state: address.address.state,
       postalCode: address.address.postalCode,
@@ -264,7 +272,10 @@ export default function ProfilePage() {
                       <p className="text-amber-800 dark:text-amber-200 text-sm mb-3">
                         Welcome! Please set your name to complete your profile.
                       </p>
-                      <Button size="sm" onClick={() => setIsEditProfileOpen(true)}>
+                      <Button
+                        size="sm"
+                        onClick={() => setIsEditProfileOpen(true)}
+                      >
                         Set Your Name
                       </Button>
                     </div>
@@ -275,7 +286,7 @@ export default function ProfilePage() {
                       {user.avatar ? (
                         <Image
                           src={user.avatar}
-                          alt={user.name || 'User'}
+                          alt={user.name || "User"}
                           fill
                           sizes="96px"
                           className="object-cover"
@@ -288,7 +299,11 @@ export default function ProfilePage() {
                     </div>
                     <div className="flex-1 space-y-1">
                       <h3 className="text-xl font-semibold">
-                        {user.name || <span className="text-muted-foreground italic">Name not set</span>}
+                        {user.name || (
+                          <span className="text-muted-foreground italic">
+                            Name not set
+                          </span>
+                        )}
                       </h3>
                       <p className="text-muted-foreground">{user.email}</p>
                       <div className="flex items-center gap-2 mt-2">
@@ -298,19 +313,24 @@ export default function ProfilePage() {
                           </span>
                         )}
                         <span className="text-xs text-muted-foreground">
-                          Member since {new Date(user.createdAt).toLocaleDateString()}
+                          Member since{" "}
+                          {new Date(user.createdAt).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground">Full Name</Label>
                       <p className="font-medium">
-                        {user.name || <span className="text-muted-foreground italic">Not set</span>}
+                        {user.name || (
+                          <span className="text-muted-foreground italic">
+                            Not set
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div>
@@ -319,13 +339,17 @@ export default function ProfilePage() {
                     </div>
                     {user.role && (
                       <div>
-                        <Label className="text-muted-foreground">Account Role</Label>
+                        <Label className="text-muted-foreground">
+                          Account Role
+                        </Label>
                         <p className="font-medium">{user.role}</p>
                       </div>
                     )}
                     {user.lastLogin && (
                       <div>
-                        <Label className="text-muted-foreground">Last Login</Label>
+                        <Label className="text-muted-foreground">
+                          Last Login
+                        </Label>
                         <p className="font-medium">
                           {new Date(user.lastLogin).toLocaleString()}
                         </p>
@@ -333,11 +357,14 @@ export default function ProfilePage() {
                     )}
                   </div>
 
-                  <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
+                  <Dialog
+                    open={isEditProfileOpen}
+                    onOpenChange={setIsEditProfileOpen}
+                  >
                     <DialogTrigger asChild>
                       <Button>
                         <Edit className="h-4 w-4 mr-2" />
-                        {user.name ? 'Edit Profile' : 'Set Up Profile'}
+                        {user.name ? "Edit Profile" : "Set Up Profile"}
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -353,7 +380,12 @@ export default function ProfilePage() {
                           <Input
                             id="profileName"
                             value={profileForm.name}
-                            onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                            onChange={(e) =>
+                              setProfileForm({
+                                ...profileForm,
+                                name: e.target.value,
+                              })
+                            }
                             placeholder="Your name"
                           />
                         </div>
@@ -362,7 +394,12 @@ export default function ProfilePage() {
                           <Input
                             id="profileAvatar"
                             value={profileForm.avatar}
-                            onChange={(e) => setProfileForm({ ...profileForm, avatar: e.target.value })}
+                            onChange={(e) =>
+                              setProfileForm({
+                                ...profileForm,
+                                avatar: e.target.value,
+                              })
+                            }
                             placeholder="https://example.com/avatar.jpg"
                           />
                           <p className="text-xs text-muted-foreground">
@@ -384,11 +421,19 @@ export default function ProfilePage() {
                         )}
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditProfileOpen(false)}>
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsEditProfileOpen(false)}
+                        >
                           Cancel
                         </Button>
-                        <Button onClick={handleUpdateProfile} disabled={profileSaving}>
-                          {profileSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        <Button
+                          onClick={handleUpdateProfile}
+                          disabled={profileSaving}
+                        >
+                          {profileSaving && (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          )}
                           Save Changes
                         </Button>
                       </DialogFooter>
@@ -457,77 +502,86 @@ export default function ProfilePage() {
                   {error}
                 </div>
               )}
-              
+
               {loading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Array.isArray(addresses) && addresses.length > 0 ? addresses.map((addr) => (
-                    <div key={addr.id} className="border rounded-lg p-4 relative">
-                      {addr.address.isDefault && (
-                        <div className="absolute top-2 right-2 text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-                          Default
-                        </div>
-                      )}
-                      <div className="flex items-start gap-2 mb-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
-                        <h3 className="font-semibold">
-                          {addr.address.firstName} {addr.address.lastName}
-                        </h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground ml-6">
-                        {addr.address.addressLine1}
-                        {addr.address.addressLine2 && (
-                          <>
-                            <br />
-                            {addr.address.addressLine2}
-                          </>
+                  {Array.isArray(addresses) && addresses.length > 0 ? (
+                    addresses.map((addr) => (
+                      <div
+                        key={addr.id}
+                        className="border rounded-lg p-4 relative"
+                      >
+                        {addr.address.isDefault && (
+                          <div className="absolute top-2 right-2 text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+                            Default
+                          </div>
                         )}
-                        <br />
-                        {addr.address.city}, {addr.address.state} {addr.address.postalCode}
-                        <br />
-                        {addr.address.country}
-                        <br />
-                        {addr.address.phone}
-                      </p>
-                      <div className="mt-4 flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(addr)}
-                        >
-                          <Edit className="h-3 w-3 mr-1" />
-                          Edit
-                        </Button>
-                        {!addr.address.isDefault && (
+                        <div className="flex items-start gap-2 mb-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
+                          <h3 className="font-semibold">
+                            {addr.address.firstName} {addr.address.lastName}
+                          </h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground ml-6">
+                          {addr.address.addressLine1}
+                          {addr.address.addressLine2 && (
+                            <>
+                              <br />
+                              {addr.address.addressLine2}
+                            </>
+                          )}
+                          <br />
+                          {addr.address.city}, {addr.address.state}{" "}
+                          {addr.address.postalCode}
+                          <br />
+                          {addr.address.country}
+                          <br />
+                          {addr.address.phone}
+                        </p>
+                        <div className="mt-4 flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleSetDefault(addr.id)}
+                            onClick={() => openEditDialog(addr)}
                           >
-                            Set Default
+                            <Edit className="h-3 w-3 mr-1" />
+                            Edit
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() => handleDeleteAddress(addr.id)}
-                        >
-                          <Trash2 className="h-3 w-3 mr-1" />
-                          Delete
-                        </Button>
+                          {!addr.address.isDefault && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSetDefault(addr.id)}
+                            >
+                              Set Default
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => handleDeleteAddress(addr.id)}
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  )) : (
+                    ))
+                  ) : (
                     <div className="col-span-full text-center py-8 text-muted-foreground">
                       No addresses found. Add your first address below.
                     </div>
                   )}
-                  
-                  <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+
+                  <Dialog
+                    open={isAddDialogOpen}
+                    onOpenChange={setIsAddDialogOpen}
+                  >
                     <DialogTrigger asChild>
                       <div className="border border-dashed rounded-lg p-4 flex items-center justify-center min-h-[150px] cursor-pointer hover:bg-muted/50">
                         <Button variant="ghost">
@@ -550,7 +604,12 @@ export default function ProfilePage() {
                             <Input
                               id="firstName"
                               value={formData.firstName}
-                              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  firstName: e.target.value,
+                                })
+                              }
                             />
                           </div>
                           <div className="space-y-2">
@@ -558,7 +617,12 @@ export default function ProfilePage() {
                             <Input
                               id="lastName"
                               value={formData.lastName}
-                              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  lastName: e.target.value,
+                                })
+                              }
                             />
                           </div>
                         </div>
@@ -567,15 +631,27 @@ export default function ProfilePage() {
                           <Input
                             id="addressLine1"
                             value={formData.addressLine1}
-                            onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                addressLine1: e.target.value,
+                              })
+                            }
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="addressLine2">Address Line 2 (Optional)</Label>
+                          <Label htmlFor="addressLine2">
+                            Address Line 2 (Optional)
+                          </Label>
                           <Input
                             id="addressLine2"
                             value={formData.addressLine2}
-                            onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                addressLine2: e.target.value,
+                              })
+                            }
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -584,7 +660,12 @@ export default function ProfilePage() {
                             <Input
                               id="city"
                               value={formData.city}
-                              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  city: e.target.value,
+                                })
+                              }
                             />
                           </div>
                           <div className="space-y-2">
@@ -592,7 +673,12 @@ export default function ProfilePage() {
                             <Input
                               id="state"
                               value={formData.state}
-                              onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  state: e.target.value,
+                                })
+                              }
                             />
                           </div>
                         </div>
@@ -602,7 +688,12 @@ export default function ProfilePage() {
                             <Input
                               id="postalCode"
                               value={formData.postalCode}
-                              onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  postalCode: e.target.value,
+                                })
+                              }
                             />
                           </div>
                           <div className="space-y-2">
@@ -610,7 +701,12 @@ export default function ProfilePage() {
                             <Input
                               id="country"
                               value={formData.country}
-                              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  country: e.target.value,
+                                })
+                              }
                             />
                           </div>
                         </div>
@@ -619,16 +715,30 @@ export default function ProfilePage() {
                           <Input
                             id="phone"
                             value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                phone: e.target.value,
+                              })
+                            }
                           />
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={addressSaving}>
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsAddDialogOpen(false)}
+                          disabled={addressSaving}
+                        >
                           Cancel
                         </Button>
-                        <Button onClick={handleCreateAddress} disabled={addressSaving}>
-                          {addressSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        <Button
+                          onClick={handleCreateAddress}
+                          disabled={addressSaving}
+                        >
+                          {addressSaving && (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          )}
                           Add Address
                         </Button>
                       </DialogFooter>
@@ -642,7 +752,10 @@ export default function ProfilePage() {
       </Tabs>
 
       {/* Edit Address Dialog */}
-      <Dialog open={!!editingAddress} onOpenChange={() => setEditingAddress(null)}>
+      <Dialog
+        open={!!editingAddress}
+        onOpenChange={() => setEditingAddress(null)}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Address</DialogTitle>
@@ -657,7 +770,9 @@ export default function ProfilePage() {
                 <Input
                   id="editFirstName"
                   value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, firstName: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -665,7 +780,9 @@ export default function ProfilePage() {
                 <Input
                   id="editLastName"
                   value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lastName: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -674,15 +791,21 @@ export default function ProfilePage() {
               <Input
                 id="editAddressLine1"
                 value={formData.addressLine1}
-                onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, addressLine1: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="editAddressLine2">Address Line 2 (Optional)</Label>
+              <Label htmlFor="editAddressLine2">
+                Address Line 2 (Optional)
+              </Label>
               <Input
                 id="editAddressLine2"
                 value={formData.addressLine2}
-                onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, addressLine2: e.target.value })
+                }
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -691,7 +814,9 @@ export default function ProfilePage() {
                 <Input
                   id="editCity"
                   value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, city: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -699,7 +824,9 @@ export default function ProfilePage() {
                 <Input
                   id="editState"
                   value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, state: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -709,7 +836,9 @@ export default function ProfilePage() {
                 <Input
                   id="editPostalCode"
                   value={formData.postalCode}
-                  onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, postalCode: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -717,7 +846,9 @@ export default function ProfilePage() {
                 <Input
                   id="editCountry"
                   value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, country: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -726,7 +857,9 @@ export default function ProfilePage() {
               <Input
                 id="editPhone"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
               />
             </div>
           </div>
@@ -734,9 +867,7 @@ export default function ProfilePage() {
             <Button variant="outline" onClick={() => setEditingAddress(null)}>
               Cancel
             </Button>
-            <Button onClick={handleUpdateAddress}>
-              Update Address
-            </Button>
+            <Button onClick={handleUpdateAddress}>Update Address</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

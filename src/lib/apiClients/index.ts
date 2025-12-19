@@ -60,6 +60,8 @@ export {
   updateAddress,
   deleteAddress,
   setDefaultAddress,
+  getDefaultAddress,
+  getAddressById,
   type Address,
   type AddressData,
   type CreateAddressRequest,

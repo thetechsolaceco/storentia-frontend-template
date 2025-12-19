@@ -73,6 +73,41 @@ export async function getAllAddresses(): Promise<AddressResponse> {
   }
 }
 
+
+export async function getDefaultAddress(): Promise<SingleAddressResponse> {
+  try {
+    const storeId = getStoreId();
+    const response = await fetch(`${BASE_URL}/store/${storeId}/billing/default`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      return { success: false, error: `API Error: ${response.status}` };
+    }
+    return response.json();
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Network error" };
+  }
+}
+
+export async function getAddressById(addressId: string): Promise<SingleAddressResponse> {
+  try {
+    const storeId = getStoreId();
+    const response = await fetch(`${BASE_URL}/store/${storeId}/billing/${addressId}`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      return { success: false, error: `API Error: ${response.status}` };
+    }
+    return response.json();
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Network error" };
+  }
+}
+
 export async function createAddress(data: CreateAddressRequest): Promise<SingleAddressResponse> {
   try {
     const storeId = getStoreId();

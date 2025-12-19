@@ -1,5 +1,6 @@
 import { BASE_URL } from "../shared";
 import { getStoreData } from "../auth";
+import { getAuthToken } from "./authentication";
 
 export interface CartItem {
   id: string;
@@ -61,11 +62,20 @@ function getStoreId(): string {
   return storeId;
 }
 
+function getHeaders() {
+  const token = getAuthToken();
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 export async function getCart(): Promise<CartResponse> {
   try {
     const storeId = getStoreId();
     const response = await fetch(`${BASE_URL}/store/${storeId}/cart`, {
       method: "GET",
+      headers: getHeaders(),
       credentials: "include",
     });
 
@@ -83,6 +93,7 @@ export async function getCartSummary(): Promise<CartSummaryResponse> {
     const storeId = getStoreId();
     const response = await fetch(`${BASE_URL}/store/${storeId}/cart/summary`, {
       method: "GET",
+      headers: getHeaders(),
       credentials: "include",
     });
 
@@ -106,7 +117,7 @@ export async function addToCart(data: AddToCartRequest): Promise<CartResponse> {
     const response = await fetch(url, {
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: getHeaders(),
       body,
     });
 
@@ -128,6 +139,7 @@ export async function removeFromCart(itemId: string): Promise<CartResponse> {
     const storeId = getStoreId();
     const response = await fetch(`${BASE_URL}/store/${storeId}/cart/${itemId}`, {
       method: "DELETE",
+      headers: getHeaders(),
       credentials: "include",
     });
 
@@ -145,6 +157,7 @@ export async function clearCart(): Promise<{ success: boolean; error?: string }>
     const storeId = getStoreId();
     const response = await fetch(`${BASE_URL}/store/${storeId}/cart`, {
       method: "DELETE",
+      headers: getHeaders(),
       credentials: "include",
     });
 
@@ -163,7 +176,7 @@ export async function updateCartItemQuantity(itemId: string, quantity: number): 
     const response = await fetch(`${BASE_URL}/store/${storeId}/cart/${itemId}`, {
       method: "PUT",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: getHeaders(),
       body: JSON.stringify({ quantity }),
     });
 
