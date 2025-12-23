@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, MapPin, User, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, MapPin, User, Loader2, Package, ShoppingBag } from "lucide-react";
 import {
   getAllAddresses,
   createAddress,
@@ -32,14 +32,18 @@ import {
   setDefaultAddress,
   getUserProfile,
   updateUserProfile,
+  getOrders,
   type Address,
   type CreateAddressRequest,
   type UserProfile,
+  type Order,
 } from "@/lib/apiClients";
 
 export default function ProfilePage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
@@ -67,7 +71,22 @@ export default function ProfilePage() {
   useEffect(() => {
     loadUser();
     loadAddresses();
+    loadOrders();
   }, []);
+
+  const loadOrders = async () => {
+    setOrdersLoading(true);
+    try {
+      const result = await getOrders();
+      if (result.success && result.data) {
+        setOrders(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to load orders:', error);
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
 
   const loadUser = async () => {
     setUserLoading(true);
@@ -414,33 +433,58 @@ export default function ProfilePage() {
               <CardDescription>View your past orders.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[1, 2].map((order) => (
-                  <div key={order} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-semibold">
-                        Order #SK-{1000 + order}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        Placed on Dec {order}, 2023
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">
-                        Status:{" "}
-                        <span className="text-green-600 font-medium">
-                          Delivered
+              {ordersLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="text-center py-8">
+                  <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground mb-4">No orders yet</p>
+                  <Button variant="outline" asChild>
+                    <a href="/products">Start Shopping</a>
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <div key={order.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold flex items-center gap-2">
+                          <Package className="h-4 w-4" />
+                          Order #{order.id.slice(-8).toUpperCase()}
                         </span>
-                      </span>
-                      <span className="font-bold">$120.00</span>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">
+                          Status:{" "}
+                          <span className={`font-medium ${
+                            order.status === 'DELIVERED' ? 'text-green-600' :
+                            order.status === 'PENDING' ? 'text-yellow-600' :
+                            order.status === 'PROCESSING' ? 'text-blue-600' :
+                            order.status === 'CANCELLED' ? 'text-red-600' :
+                            'text-muted-foreground'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </span>
+                        <span className="font-bold">${order.total.toFixed(2)}</span>
+                      </div>
+                      {order.items && order.items.length > 0 && (
+                        <>
+                          <Separator className="my-3" />
+                          <div className="text-sm text-muted-foreground">
+                            {order.items.length} item{order.items.length > 1 ? 's' : ''}
+                          </div>
+                        </>
+                      )}
                     </div>
-                    <Separator className="my-2" />
-                    <Button variant="outline" size="sm">
-                      View Details
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

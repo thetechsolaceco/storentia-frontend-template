@@ -1,172 +1,108 @@
-# Storentia - E-commerce Store Template
+# Storentia
 
-A modern, feature-rich e-commerce store template built with Next.js 16, React 19, and Tailwind CSS.
+Developer-first eCommerce infrastructure that simplifies how online stores are built, managed, and scaled.
 
-## 🚀 Quick Start
+## What is Storentia?
 
-Create a new Storentia store with one command:
+Storentia provides a centralized dashboard and APIs that let teams create and operate fully functional eCommerce stores with greater control and flexibility. Instead of relying on rigid platforms, you get:
+
+- **Full ownership** of your storefront code
+- **Hosted backend** for catalog, orders, and user management
+- **Multi-store support** from a single subscription
+- **Production-ready** templates to ship faster
+
+## Quick Start
 
 ```bash
 npm create storentia@latest
 ```
 
 You'll be prompted to enter:
-1. **Store name** - Your store's name (e.g., "My Awesome Store")
-2. **Authentication key** - Your Storentia authentication key (will be validated automatically)
+1. **Project name** - Name of your project
+2. **API key** - Your Storentia API key (get one from the [Storentia Dashboard](https://storentia.com))
 
-The CLI will automatically:
-- ✅ **Validate your API key** against the Storentia backend
-- ✅ Retrieve your store information from the API
-- ✅ Clone the template
-- ✅ Set up your project with the specified name
-- ✅ Create `.env.local` with validated store data
-- ✅ Create `.env.dashboard` with validated store data
-- ✅ Install all dependencies
-- ✅ Configure authentication automatically
+## How It Works
 
-> **New in v1.1.0**: API keys are now validated before store creation! See [API Validation Guide](./docs/guides/API_VALIDATION.md) for details.
+1. **Subscribe** to Storentia and define how many stores you need
+2. **Generate API keys** from the dashboard for each store
+3. **Bootstrap** your project with the CLI
+4. **Customize** the storefront while Storentia handles the backend
 
-Or provide the store name directly:
+Your storefront is fully customizable and developer-owned. All operational logic—catalog management, user access, and order handling—is managed through Storentia's hosted dashboard and APIs.
 
-```bash
-npm create storentia@latest my-store-name
-```
+## Features
 
-Alternative with npx:
+- 🛒 **Products & Categories** - Full catalog management
+- 📦 **Order Management** - Track orders with status updates
+- 👤 **User Authentication** - Built-in auth with Google OAuth
+- 📍 **Address Management** - Billing and shipping addresses
+- 🛍️ **Cart & Checkout** - Complete shopping flow
+- 🔍 **Product Search** - Real-time search with suggestions
+- 🌙 **Dark Mode** - Theme support out of the box
+- 📱 **Responsive** - Mobile-first design
 
-```bash
-npx create-storentia@latest
-```
+## Environment Variables
 
-Then navigate to your project and start the development server:
-
-```bash
-cd my-store-name
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) to see your store.
-
-## ✨ Features
-
-- **API Key Validation**: Automatic validation of Storentia API keys before store creation
-- **Modern Stack**: Built with Next.js 16 and React 19
-- **Beautiful UI**: Pre-built components using Radix UI and Tailwind CSS
-- **Dashboard**: Complete admin dashboard for store management
-- **Responsive**: Mobile-first design that works on all devices
-- **TypeScript**: Full TypeScript support for type safety
-- **Dark Mode**: Built-in theme switching with next-themes
-- **Charts**: Data visualization with Recharts
-- **Carousel**: Product showcases with Embla Carousel
-
-## 📦 What's Included
-
-- Authentication pages (Login/Register)
-- Product catalog and detail pages
-- Shopping cart functionality
-- Admin dashboard
-- User profile management
-- Order management
-- Responsive navigation
-- And much more!
-
-## 🔐 Environment Configuration
-
-The CLI automatically creates three environment files with **validated store data** from the Storentia API:
-
-### `.env.local` (Main Store)
 ```env
-# Authentication Key
-STORENTIA_AUTH=your_authentication_key
-
-# Store Information (from validated API response)
-NEXT_PUBLIC_STORE_ID=your_store_id
-NEXT_PUBLIC_STORE_NAME=Your Store Name
-NEXT_PUBLIC_STORE_DESCRIPTION=Your store description
-
-# Store Owner Information
-STORE_OWNER_ID=owner_id
-STORE_OWNER_NAME=Owner Name
-STORE_OWNER_EMAIL=owner@example.com
-
-# API Key Information
-API_KEY_TYPE=PROD
-API_KEY_PERMISSIONS=READ,WRITE,MANAGE_PRODUCTS
-
-# API Configuration
-NEXT_PUBLIC_API_URL=https://storekit.samarthh.me/v1
+NEXT_PUBLIC_API_URL=https://api.storentia.com/v1
+NEXT_PUBLIC_STORENTIA_API_KEY=your_api_key_here
 ```
 
-### `.env.dashboard` (Admin Dashboard)
-Same as `.env.local` with additional dashboard-specific variables:
-```env
-NEXT_PUBLIC_DASHBOARD_MODE=true
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=auto_generated_secret
+## Project Structure
+
+```
+├── src/
+│   ├── app/           # Next.js app router pages
+│   ├── components/    # React components
+│   │   ├── landing/   # Landing page components
+│   │   ├── providers/ # Context providers
+│   │   ├── shared/    # Shared components (Header, Footer)
+│   │   └── ui/        # UI primitives (shadcn/ui)
+│   ├── lib/           # Utilities and API clients
+│   │   ├── apiClients/# Storentia API integration
+│   │   └── store/     # Redux store (cart state)
+│   └── types/         # TypeScript types
+├── public/            # Static assets
+├── scripts/           # CLI and build scripts
+└── docs/              # Documentation
 ```
 
-### `.env.example` (Reference Template)
-A template file for your reference with all available environment variables.
+## Tech Stack
 
-**⚠️ Important**: Never commit `.env.local` or `.env.dashboard` to version control. These files are automatically added to `.gitignore`.
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui + Radix UI
+- **State Management**: Redux Toolkit
+- **Authentication**: Cookie-based with Storentia API
+- **Language**: TypeScript
 
-**📖 Learn More**: See [API Validation Guide](./docs/guides/API_VALIDATION.md) for detailed information about API key validation.
+## Development
 
-## 🛠️ Available Scripts
+```bash
+npm run dev      # Start dev server on port 3001
+npm run build    # Build for production
+npm start        # Run production build
+npm run lint     # Run ESLint
+```
 
-In your project directory, you can run:
+## Documentation
 
-### `npm run dev`
-Starts the development server on [http://localhost:3000](http://localhost:3000)
-
-### `npm run build`
-Builds the application for production
-
-### `npm start`
-Runs the built application in production mode
-
-### `npm run lint`
-Runs ESLint to check code quality
-
-## 🎨 Customization
-
-The template is fully customizable. You can:
-
-- Modify components in the `src/components` directory
-- Update pages in the `src/app` directory
-- Customize styles in your Tailwind configuration
-- Add your own features and functionality
-
-## 📚 Tech Stack
-
-- **Framework**: [Next.js 16](https://nextjs.org/)
-- **UI Library**: [React 19](https://react.dev/)
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
-- **Components**: [Radix UI](https://www.radix-ui.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Charts**: [Recharts](https://recharts.org/)
-- **TypeScript**: Full type safety
-
-## 📚 Documentation
-
-- [CLI Usage Guide](./docs/guides/CLI_USAGE.md)
+- [CLI Usage](./docs/guides/CLI_USAGE.md)
 - [API Validation](./docs/guides/API_VALIDATION.md)
-- [Changelog](./docs/CHANGELOG.md)
 - [Contributing](./docs/development/CONTRIBUTING.md)
+- [Changelog](./docs/CHANGELOG.md)
 
-## 🤝 Contributing
+## Why Storentia?
 
-Contributions are welcome! See [Contributing Guide](./docs/development/CONTRIBUTING.md) for details.
+| Traditional Approach | With Storentia |
+|---------------------|----------------|
+| Build auth from scratch | Auth included |
+| Set up database & APIs | Hosted backend |
+| Rebuild for each store | Multi-store ready |
+| Maintain infrastructure | Focus on UI/UX |
 
-## 📄 License
+Ship faster. Maintain consistency. Scale without rebuilding.
 
-MIT License - feel free to use this template for your projects!
+## License
 
-## 🔗 Links
-
-- [GitHub Repository](https://github.com/thetechsolaceco/Storentia-Init)
-- [Report Issues](https://github.com/thetechsolaceco/Storentia-Init/issues)
-
----
-
-Made with ❤️ by [TechSolace](https://github.com/thetechsolaceco)
+MIT

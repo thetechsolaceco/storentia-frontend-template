@@ -18,7 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ShoppingCart, Heart } from "lucide-react";
+import { Loader2, ShoppingCart, Heart, Minus, Plus, Check } from "lucide-react";
 import {
   storeAPI,
   addToCart,
@@ -26,10 +26,14 @@ import {
   type StoreProduct,
   type StoreCollection,
 } from "@/lib/apiClients";
+import { useAppSelector, useAppDispatch } from "@/lib/store/hooks";
+import { selectCartItems, addItem, updateQuantity, removeItem } from "@/lib/store/cartSlice";
 
 function ProductsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const dispatch = useAppDispatch();
+  const cartItems = useAppSelector(selectCartItems);
   const initialSearch = searchParams.get("search") || "";
 
   const [products, setProducts] = useState<StoreProduct[]>([]);
@@ -44,6 +48,8 @@ function ProductsContent() {
   );
   const [loadingCart, setLoadingCart] = useState<string | null>(null);
   const [loadingWishlist, setLoadingWishlist] = useState<string | null>(null);
+
+  const getCartItem = (productId: string) => cartItems.find((item) => item.productId === productId);
 
   const fetchCollections = async () => {
     try {
@@ -124,13 +130,22 @@ function ProductsContent() {
     setPage(1);
   };
 
-  const handleAddToCart = async (e: React.MouseEvent, productId: string) => {
+  const handleAddToCart = async (e: React.MouseEvent, product: StoreProduct) => {
     e.preventDefault();
     e.stopPropagation();
-    setLoadingCart(productId);
+    setLoadingCart(product.id);
     try {
-      const result = await addToCart({ productId, quantity: 1 });
-      if (!result.success) {
+      const result = await addToCart({ productId: product.id, quantity: 1 });
+      if (result.success) {
+        dispatch(addItem({
+          id: product.id,
+          productId: product.id,
+          title: product.title,
+          price: product.price,
+          quantity: 1,
+          image: product.images?.[0]?.url,
+        }));
+      } else {
         console.error("Failed to add to cart:", result.error);
       }
     } catch (error) {
@@ -138,6 +153,16 @@ function ProductsContent() {
     } finally {
       setLoadingCart(null);
     }
+  };
+
+  const handleUpdateQuantity = async (e: React.MouseEvent, product: StoreProduct, newQuantity: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (newQuantity < 1) {
+      dispatch(removeItem(product.id));
+      return;
+    }
+    dispatch(updateQuantity({ productId: product.id, quantity: newQuantity }));
   };
 
   const handleAddToWishlist = async (
@@ -331,21 +356,52 @@ function ProductsContent() {
                           ${product.price.toFixed(2)}
                         </p>
                         <div className="flex gap-2 mt-3">
-                          <Button
-                            size="sm"
-                            className="flex-1"
-                            onClick={(e) => handleAddToCart(e, product.id)}
-                            disabled={loadingCart === product.id}
-                          >
-                            {loadingCart === product.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <ShoppingCart className="h-4 w-4 mr-1" />
-                                Add to Cart
-                              </>
-                            )}
-                          </Button>
+                          {(() => {
+                            const cartItem = getCartItem(product.id);
+                            if (cartItem) {
+                              return (
+                                <div className="flex items-center gap-2 flex-1">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 w-8 p-0"
+                                    onClick={(e) => handleUpdateQuantity(e, product, cartItem.quantity - 1)}
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="w-8 text-center text-sm font-medium">{cartItem.quantity}</span>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 w-8 p-0"
+                                    onClick={(e) => handleUpdateQuantity(e, product, cartItem.quantity + 1)}
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="flex items-center text-xs text-green-600 ml-1">
+                                    <Check className="h-3 w-3 mr-1" /> In Cart
+                                  </span>
+                                </div>
+                              );
+                            }
+                            return (
+                              <Button
+                                size="sm"
+                                className="flex-1"
+                                onClick={(e) => handleAddToCart(e, product)}
+                                disabled={loadingCart === product.id}
+                              >
+                                {loadingCart === product.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <ShoppingCart className="h-4 w-4 mr-1" />
+                                    Add to Cart
+                                  </>
+                                )}
+                              </Button>
+                            );
+                          })()}
                           <Button
                             size="sm"
                             variant="outline"

@@ -42,6 +42,7 @@ export const API_ENDPOINTS = {
 
   ORDERS_GET_ALL: "/orders",
   ORDERS_GET_BY_ID: "/orders",
+  ORDERS_CREATE: "/order",
   ORDERS_UPDATE_STATUS: "/orders/status",
 
   CUSTOMERS_GET_ALL: "/customers",

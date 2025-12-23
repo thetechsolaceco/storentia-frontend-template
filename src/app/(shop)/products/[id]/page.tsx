@@ -8,11 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { storeAPI, addToCart, addToWishlist, getWishlist, removeFromWishlist, type StoreProduct } from "@/lib/apiClients";
 import { isAuthenticated } from "@/lib/apiClients/store/authentication";
+import { useAppSelector, useAppDispatch } from "@/lib/store/hooks";
+import { selectCartItems, addItem, updateQuantity, removeItem } from "@/lib/store/cartSlice";
 import Link from "next/link";
 
 export default function ProductPage() {
   const params = useParams();
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const cartItems = useAppSelector(selectCartItems);
   const productId = params.id as string;
 
   const [product, setProduct] = useState<StoreProduct | null>(null);
@@ -21,10 +25,11 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
-  const [addedToCart, setAddedToCart] = useState(false);
   const [inWishlist, setInWishlist] = useState(false);
   const [wishlistItemId, setWishlistItemId] = useState<string | null>(null);
   const [togglingWishlist, setTogglingWishlist] = useState(false);
+
+  const cartItem = cartItems.find((item) => item.productId === productId);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -103,13 +108,17 @@ export default function ProductPage() {
     setAddingToCart(true);
     setError(null);
     try {
-      console.log('Adding to cart:', { productId: product.id, quantity });
       const result = await addToCart({ productId: product.id, quantity });
       if (result.success) {
-        setAddedToCart(true);
-        // Dispatch event to update cart count in header
+        dispatch(addItem({
+          id: product.id,
+          productId: product.id,
+          title: product.title,
+          price: product.price,
+          quantity,
+          image: product.images?.[0]?.url,
+        }));
         window.dispatchEvent(new Event('cart-update'));
-        setTimeout(() => setAddedToCart(false), 2000);
       } else {
         setError(result.error || 'Failed to add to cart');
       }
@@ -118,6 +127,14 @@ export default function ProductPage() {
     } finally {
       setAddingToCart(false);
     }
+  };
+
+  const handleUpdateCartQuantity = (newQuantity: number) => {
+    if (newQuantity < 1) {
+      dispatch(removeItem(productId));
+      return;
+    }
+    dispatch(updateQuantity({ productId, quantity: newQuantity }));
   };
 
   const handleToggleWishlist = async () => {
@@ -246,21 +263,46 @@ export default function ProductPage() {
           </div>
 
           <div className="flex gap-4 pt-4">
-            <Button
-              size="lg"
-              className="flex-1 gap-2"
-              onClick={handleAddToCart}
-              disabled={addingToCart || product.status !== "ACTIVE"}
-            >
-              {addingToCart ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : addedToCart ? (
-                <Check className="h-5 w-5" />
-              ) : (
-                <ShoppingCart className="h-5 w-5" />
-              )}
-              {addedToCart ? "Added!" : "Add to Cart"}
-            </Button>
+            {cartItem ? (
+              <div className="flex-1 flex items-center gap-4 p-3 border rounded-lg bg-muted/30">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-600" /> In Cart
+                </span>
+                <div className="flex items-center gap-2 ml-auto">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleUpdateCartQuantity(cartItem.quantity - 1)}
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  <span className="w-10 text-center font-medium">{cartItem.quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleUpdateCartQuantity(cartItem.quantity + 1)}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                size="lg"
+                className="flex-1 gap-2"
+                onClick={handleAddToCart}
+                disabled={addingToCart || product.status !== "ACTIVE"}
+              >
+                {addingToCart ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <ShoppingCart className="h-5 w-5" />
+                )}
+                Add to Cart
+              </Button>
+            )}
             <Button
               size="lg"
               variant={inWishlist ? "default" : "outline"}
