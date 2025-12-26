@@ -117,7 +117,6 @@ export const authAPI = {
 
 const STORAGE_KEYS = {
   USER: "storentia_user",
-  API_KEY: "storentia_api_key",
   STORE: "storentia_store",
 } as const;
 
@@ -139,7 +138,6 @@ export function getUserSession(): { user: User | null } {
 export function clearUserSession(): void {
   if (typeof window !== "undefined") {
     localStorage.removeItem(STORAGE_KEYS.USER);
-    localStorage.removeItem(STORAGE_KEYS.API_KEY);
     localStorage.removeItem(STORAGE_KEYS.STORE);
   }
 }
@@ -154,17 +152,6 @@ export function isAuthenticatedLocal(): boolean {
   return !!localStorage.getItem(STORAGE_KEYS.USER);
 }
 
-export function setApiKey(apiKey: string): void {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEYS.API_KEY, apiKey);
-  }
-}
-
-export function getApiKey(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(STORAGE_KEYS.API_KEY);
-}
-
 export function setStoreData(storeData: StoreData): void {
   if (typeof window !== "undefined") {
     localStorage.setItem(STORAGE_KEYS.STORE, JSON.stringify(storeData));
@@ -173,21 +160,30 @@ export function setStoreData(storeData: StoreData): void {
 
 export function getStoreData(): StoreData | null {
   if (typeof window === "undefined") return null;
+  
+  // First check environment variable for storeId
+  const envStoreId = process.env.NEXT_PUBLIC_STORENTIA_STOREID;
+  if (envStoreId) {
+    // Return minimal store data with env storeId
+    const storedData = localStorage.getItem(STORAGE_KEYS.STORE);
+    if (storedData) {
+      return JSON.parse(storedData);
+    }
+    return { storeId: envStoreId } as StoreData;
+  }
+  
   const storeStr = localStorage.getItem(STORAGE_KEYS.STORE);
   return storeStr ? JSON.parse(storeStr) : null;
 }
 
-export function setAuthSession(storeData: StoreData, apiKey: string): void {
-  setApiKey(apiKey);
+export function setAuthSession(storeData: StoreData): void {
   setStoreData(storeData);
 }
 
 export function getAuthSession(): {
-  apiKey: string | null;
   storeData: StoreData | null;
 } {
   return {
-    apiKey: getApiKey(),
     storeData: getStoreData(),
   };
 }

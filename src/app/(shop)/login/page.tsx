@@ -15,7 +15,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { sendOtp, verifyOtp } from '@/lib/apiClients/store/authentication';
-import { authAPI, setAuthSession } from '@/lib/apiClients/auth';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -23,47 +22,25 @@ function LoginPage() {
   const [step, setStep] = useState<'email' | 'otp'>('email');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [keyValidated, setKeyValidated] = useState(false);
-  const [validatingKey, setValidatingKey] = useState(true);
+  const [storeConfigured, setStoreConfigured] = useState(false);
+  const [checking, setChecking] = useState(true);
   const router = useRouter();
 
-  // Validate API key once when component loads
   useEffect(() => {
-    const validateApiKey = async () => {
-      try {
-        const apiKey = process.env.NEXT_PUBLIC_STORENTIA_API_KEY;
-        if (!apiKey) {
-          setError('API key not configured');
-          setValidatingKey(false);
-          return;
-        }
-
-        const result = await authAPI.validateKey(apiKey);
-        
-        if (result.success && result.store_data) {
-          // Store the validated data
-          setAuthSession(result.store_data, apiKey);
-          setKeyValidated(true);
-          console.log('API key validated successfully:', result.store_data);
-        } else {
-          setError(result.message || 'Invalid API key');
-        }
-      } catch (error) {
-        console.error('Key validation error:', error);
-        setError('Failed to validate API key');
-      } finally {
-        setValidatingKey(false);
-      }
-    };
-
-    validateApiKey();
+    const storeId = process.env.NEXT_PUBLIC_STORENTIA_STOREID;
+    if (storeId) {
+      setStoreConfigured(true);
+    } else {
+      setError('Store ID not configured');
+    }
+    setChecking(false);
   }, []);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!keyValidated) {
-      setError('API key validation required');
+    if (!storeConfigured) {
+      setError('Store configuration required');
       return;
     }
 
@@ -95,9 +72,7 @@ function LoginPage() {
       const result = await verifyOtp({ email, otp });
       
       if (result.success) {
-        // Dispatch custom event to notify header of auth change
         window.dispatchEvent(new Event('auth-change'));
-        // Redirect to store home page after successful login
         router.push('/');
         router.refresh();
       } else {
@@ -116,15 +91,14 @@ function LoginPage() {
     setError('');
   };
 
-  // Show loading while validating key
-  if (validatingKey) {
+  if (checking) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)] py-10">
         <Card className="w-full max-w-md">
           <CardContent className="flex items-center justify-center py-10">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-sm text-muted-foreground">Validating store configuration...</p>
+              <p className="text-sm text-muted-foreground">Loading...</p>
             </div>
           </CardContent>
         </Card>
@@ -132,15 +106,14 @@ function LoginPage() {
     );
   }
 
-  // Show error if key validation failed
-  if (!keyValidated) {
+  if (!storeConfigured) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)] py-10">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-2xl text-red-600">Configuration Error</CardTitle>
             <CardDescription>
-              Store configuration validation failed
+              Store configuration is missing
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -180,7 +153,7 @@ function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="storeuser@example.com"
+                  placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required

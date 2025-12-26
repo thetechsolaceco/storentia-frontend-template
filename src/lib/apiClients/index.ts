@@ -5,8 +5,6 @@ export {
   clearUserSession,
   isAuthenticated,
   isAuthenticatedLocal,
-  setApiKey,
-  getApiKey,
   setStoreData,
   getStoreData,
   setAuthSession,
@@ -29,6 +27,8 @@ export { API_ENDPOINTS } from "./api";
 // Store Public APIs
 export {
   storeAPI,
+  type StoreInfo,
+  type StoreInfoResponse,
   type StoreProduct,
   type StoreProductImage,
   type StoreProductsResponse,

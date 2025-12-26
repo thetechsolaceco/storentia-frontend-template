@@ -19,7 +19,9 @@ npm create storentia@latest
 
 You'll be prompted to enter:
 1. **Project name** - Name of your project
-2. **API key** - Your Storentia API key (get one from the [Storentia Dashboard](https://storentia.com))
+2. **Store ID** - Your Storentia Store ID (from the dashboard)
+
+The CLI will automatically configure your `.env` file with the store ID.
 
 ## How It Works
 
@@ -45,7 +47,7 @@ Your storefront is fully customizable and developer-owned. All operational logic
 
 ```env
 NEXT_PUBLIC_API_URL=https://api.storentia.com/v1
-NEXT_PUBLIC_STORENTIA_API_KEY=your_api_key_here
+NEXT_PUBLIC_STORENTIA_STOREID=your_store_id_here
 ```
 
 ## Project Structure

@@ -47,6 +47,8 @@ import {
   logout,
 } from "@/lib/apiClients/store/authentication";
 import { getOrders, storeAPI, type Order, type StoreProduct } from "@/lib/apiClients";
+import { useAppSelector } from "@/lib/store/hooks";
+import { selectStoreInfo } from "@/lib/store/storeSlice";
 
 const ORDER_STEPS = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED"];
 
@@ -80,6 +82,8 @@ export function Header() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const storeInfo = useAppSelector(selectStoreInfo);
+  const storeName = storeInfo?.name || "StoreKit";
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,7 +190,7 @@ export function Header() {
                 <div className="flex flex-col h-full">
                   <div className="p-6 border-b">
                     <Link href="/" className="flex items-center gap-2">
-                      <span className="text-xl font-bold tracking-tight">StoreKit</span>
+                      <span className="text-xl font-bold tracking-tight">{storeName}</span>
                     </Link>
                   </div>
                   <nav className="flex-1 p-4">
@@ -266,7 +270,7 @@ export function Header() {
             <div className="md:hidden w-10 h-10"></div>
           )}
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight">StoreKit</span>
+            <span className="text-xl font-bold tracking-tight">{storeName}</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
             <Link href="/products" className="transition-colors hover:text-foreground/80 text-foreground/60">

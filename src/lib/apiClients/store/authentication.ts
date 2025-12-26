@@ -6,7 +6,7 @@ interface ApiResponse<T> {
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-const API_KEY = process.env.NEXT_PUBLIC_STORENTIA_API_KEY;
+const STORE_ID = process.env.NEXT_PUBLIC_STORENTIA_STOREID;
 
 interface SendOtpRequest {
   email: string;
@@ -27,24 +27,20 @@ interface AuthResponse {
 }
 
 /**
- * Get store details from localStorage and extract storeId
+ * Get store ID from environment or localStorage
  */
 function getStoreId(): string | null {
+  // First try environment variable
+  if (STORE_ID) return STORE_ID;
+  
   if (typeof window === 'undefined') return null;
   
   try {
-    // First try to get from the auth session (new format)
+    // Fallback to localStorage
     const authStoreData = localStorage.getItem('storentia_store');
     if (authStoreData) {
       const storeData = JSON.parse(authStoreData);
       return storeData.storeId || storeData.store?.id;
-    }
-    
-    // Fallback to old format
-    const storeData = localStorage.getItem('store');
-    if (storeData) {
-      const store = JSON.parse(storeData);
-      return store.id || store.storeId;
     }
   } catch (error) {
     console.error('Error parsing store data from localStorage:', error);

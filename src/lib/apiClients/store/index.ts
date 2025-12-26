@@ -1,6 +1,22 @@
 import { BASE_URL } from "../shared";
 import { getStoreData } from "../auth";
 
+export interface StoreInfo {
+  id: string;
+  name: string;
+  description?: string;
+  logo?: string;
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StoreInfoResponse {
+  success: boolean;
+  data?: StoreInfo;
+  message?: string;
+}
+
 export interface StoreProductImage {
   id: string;
   url: string;
@@ -94,6 +110,24 @@ function getStoreId(): string {
 }
 
 export const storeAPI = {
+  // Get store details
+  async getStore(storeId?: string): Promise<StoreInfoResponse> {
+    try {
+      const id = storeId || getStoreId();
+      const response = await fetch(`${BASE_URL}/api/store/${id}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        return { success: false, message: `API Error: ${response.status}` };
+      }
+      return response.json();
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : "Network error" };
+    }
+  },
+
   // Get all public collections for a store
   async getPublicCollections(params?: PublicCollectionParams, storeId?: string): Promise<StoreCollectionsResponse> {
     try {
