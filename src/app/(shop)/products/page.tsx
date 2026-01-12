@@ -30,6 +30,7 @@ import { isAuthenticated } from "@/lib/apiClients/store/authentication";
 import { useAppDispatch } from "@/lib/store/hooks";
 import { addItem, updateQuantity, removeItem } from "@/lib/store/cartSlice";
 import { useCart } from "@/hooks/useCart";
+import { motion, AnimatePresence } from "framer-motion";
 
 function ProductsContent() {
   const router = useRouter();
@@ -203,78 +204,81 @@ function ProductsContent() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-black" />
+      </div>
+    );
+  }
+
+  if (error) {
+     return (
+        <div className="min-h-[50vh] flex flex-col items-center justify-center text-center px-4">
+           <p className="text-red-500 mb-4">{error}</p>
+           <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+     );
+  }
+
   return (
-    <div className="container py-10">
-      <div className="flex flex-col md:flex-row gap-8">
+    <div className="container py-10 md:py-20 px-4 md:px-6">
+      <div className="flex flex-col lg:flex-row gap-12">
         {/* Sidebar Filters */}
-        <aside className="w-full md:w-64 space-y-6">
+        <aside className="w-full lg:w-64 space-y-8 shrink-0">
           <div>
-            <h3 className="text-lg font-semibold mb-4">Filters</h3>
-            <div className="space-y-4">
-              <div>
-                <Label>Search</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    placeholder="Search products..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  />
-                  <Button variant="outline" size="sm" onClick={handleSearch}>
-                    Go
-                  </Button>
+            <h3 className="text-xs font-bold uppercase tracking-widest mb-6 pb-2 border-b border-gray-100">Search & Filter</h3>
+            <div className="space-y-8">
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-400 uppercase tracking-wider">Search</Label>
+                <div className="relative">
+                   <Input
+                     placeholder="Search..."
+                     value={searchTerm}
+                     onChange={(e) => setSearchTerm(e.target.value)}
+                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                     className="pl-8 text-xs h-10 border-gray-200 focus:border-black rounded-sm bg-gray-50/50"
+                   />
+                   <div className="absolute left-2.5 top-3 text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                   </div>
                 </div>
               </div>
-              <Separator />
+              
               <div>
-                <Label className="mb-3 block">Categories</Label>
-                <div className="space-y-2">
+                <Label className="text-xs text-gray-400 uppercase tracking-wider mb-4 block">Collections</Label>
+                <div className="space-y-3">
                   {collections.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No categories
+                    <p className="text-xs text-muted-foreground">
+                      No collections found
                     </p>
                   ) : (
-                    collections.map((collection) => (
+                    collections.map((collection, index) => (
                       <div
-                        key={collection.id}
-                        className="flex items-center space-x-2"
+                        key={`${collection.id}-${index}`}
+                        className="flex items-center space-x-3 group cursor-pointer"
+                        onClick={() => handleCollectionChange(collection.id)}
                       >
-                        <Checkbox
-                          id={collection.id}
-                          checked={selectedCollection === collection.id}
-                          onCheckedChange={() =>
-                            handleCollectionChange(collection.id)
-                          }
-                        />
-                        <label
-                          htmlFor={collection.id}
-                          className="text-sm cursor-pointer"
-                        >
+                         <div className={`w-3 h-3 border rounded-sm flex items-center justify-center transition-colors ${selectedCollection === collection.id ? 'bg-black border-black' : 'border-gray-300 group-hover:border-black'}`}>
+                            {selectedCollection === collection.id && <Check className="h-2 w-2 text-white" />}
+                         </div>
+                        <span className={`text-sm transition-colors ${selectedCollection === collection.id ? 'text-black font-medium' : 'text-gray-600 group-hover:text-black'}`}>
                           {collection.title}
-                        </label>
+                        </span>
                       </div>
                     ))
                   )}
                 </div>
                 {selectedCollection && (
                   <Button
-                    variant="ghost"
+                    variant="link"
                     size="sm"
-                    className="mt-2 text-xs"
+                    className="mt-2 text-[10px] uppercase tracking-widest text-gray-400 hover:text-red-500 h-auto p-0"
                     onClick={() => setSelectedCollection(null)}
                   >
-                    Clear filter
+                    Clear Filter
                   </Button>
                 )}
-              </div>
-              <Separator />
-              <div>
-                <Label>Price Range</Label>
-                <div className="flex items-center gap-2 mt-2">
-                  <Input type="number" placeholder="Min" className="w-20" />
-                  <span>-</span>
-                  <Input type="number" placeholder="Max" className="w-20" />
-                </div>
               </div>
             </div>
           </div>
@@ -282,189 +286,120 @@ function ProductsContent() {
 
         {/* Product Grid */}
         <div className="flex-1">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
-              <h1 className="text-2xl font-bold">
+              <h1 className="text-4xl font-black uppercase tracking-tight leading-none mb-2">
                 {selectedCollection
                   ? collections.find((c) => c.id === selectedCollection)
-                      ?.title || "Products"
+                      ?.title || "Collection"
                   : "All Products"}
               </h1>
-              {selectedCollection && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Filtered by category
-                </p>
-              )}
+              <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">
+                 {products.length} {products.length === 1 ? 'Item' : 'Items'} Found
+              </p>
             </div>
+            
+            {/* Pagination / Sort Controls (Simplified for now) */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Sort by:</span>
-              <Select defaultValue="featured">
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="featured">Featured</SelectItem>
-                  <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                  <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                  <SelectItem value="newest">Newest</SelectItem>
-                </SelectContent>
-              </Select>
+                 {page > 1 && (
+                    <Button variant="outline" size="sm" onClick={() => setPage(page - 1)} className="text-xs uppercase">Prev</Button>
+                 )}
+                 <span className="text-xs font-mono px-2">{page} / {totalPages}</span>
+                 {page < totalPages && (
+                    <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} className="text-xs uppercase">Next</Button>
+                 )}
             </div>
           </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : error ? (
-            <div className="text-center py-20">
-              <p className="text-red-500 mb-4">{error}</p>
-              <Button variant="outline" onClick={fetchProducts}>
-                Try Again
-              </Button>
-            </div>
-          ) : products.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground">No products found</p>
-              {selectedCollection && (
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => setSelectedCollection(null)}
-                >
-                  View all products
-                </Button>
-              )}
-            </div>
+          {products.length === 0 ? (
+             <div className="py-20 text-center border border-dashed border-gray-200 rounded-lg">
+                <p className="text-gray-400 uppercase tracking-widest text-sm">No products found</p>
+             </div>
           ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <motion.div 
+               initial="hidden"
+               animate="visible"
+               variants={{
+                 visible: { transition: { staggerChildren: 0.05 } }
+               }}
+               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12"
+            >
+              <AnimatePresence>
                 {products.map((product) => (
-                  <Link key={product.id} href={`/products/${product.id}`}>
-                    <Card className="group overflow-hidden hover:shadow-lg transition-shadow">
-                      <div className="relative aspect-square bg-muted">
-                        {product.images?.[0]?.url ? (
-                          <Image
-                            src={product.images[0].url}
-                            alt={product.title}
-                            fill
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            className="object-cover group-hover:scale-105 transition-transform"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <ShoppingCart className="h-12 w-12 text-muted-foreground" />
+                  <motion.div
+                    key={product.id}
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      visible: { opacity: 1, y: 0 }
+                    }}
+                    className="group"
+                  >
+                    {/* Image Container */}
+                    <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden mb-4 cursor-pointer" onClick={() => router.push(`/products/${product.id}`)}>
+                       {product.images?.[0]?.url ? (
+                          <div className="w-full h-full relative">
+                            <Image
+                                src={product.images[0].url}
+                                alt={product.title}
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                            />
+                             {/* Overlay on hover */}
+                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                           </div>
-                        )}
-                        {product.status === "ACTIVE" && (
-                          <Badge className="absolute top-2 left-2">
-                            Available
-                          </Badge>
-                        )}
-                      </div>
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold truncate">
-                          {product.title}
-                        </h3>
-                        {product.description && (
-                          <p className="text-sm text-muted-foreground truncate mt-1">
-                            {product.description}
-                          </p>
-                        )}
-                        <p className="text-lg font-bold mt-2">
-                          ${product.price.toFixed(2)}
-                        </p>
-                        <div className="flex gap-2 mt-3">
-                          {(() => {
-                            const inCart = isInCart(product.id);
-                            const quantity = getItemQuantity(product.id);
-                            if (inCart) {
-                              return (
-                                <div className="flex items-center gap-2 flex-1">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-8 w-8 p-0"
-                                    onClick={(e) => handleUpdateQuantity(e, product, quantity - 1)}
-                                    disabled={isAuth}
-                                  >
-                                    <Minus className="h-3 w-3" />
-                                  </Button>
-                                  <span className="w-8 text-center text-sm font-medium">{quantity}</span>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-8 w-8 p-0"
-                                    onClick={(e) => handleUpdateQuantity(e, product, quantity + 1)}
-                                    disabled={isAuth}
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                  </Button>
-                                  <span className="flex items-center text-xs text-green-600 ml-1">
-                                    <Check className="h-3 w-3 mr-1" /> In Cart
-                                  </span>
-                                </div>
-                              );
-                            }
-                            return (
-                              <Button
-                                size="sm"
-                                className="flex-1"
-                                onClick={(e) => handleAddToCart(e, product)}
-                                disabled={loadingCart === product.id}
-                              >
-                                {loadingCart === product.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <>
-                                    <ShoppingCart className="h-4 w-4 mr-1" />
-                                    Add to Cart
-                                  </>
-                                )}
-                              </Button>
-                            );
-                          })()}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => handleAddToWishlist(e, product.id)}
-                            disabled={loadingWishlist === product.id}
-                          >
-                            {loadingWishlist === product.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Heart className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
+                       ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                             <div className="w-10 h-10 border-2 border-current rounded-full flex items-center justify-center">?</div>
+                          </div>
+                       )}
 
-              {totalPages > 1 && (
-                <div className="flex justify-center gap-2 mt-8">
-                  <Button
-                    variant="outline"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => p - 1)}
-                  >
-                    Previous
-                  </Button>
-                  <span className="flex items-center px-4 text-sm text-muted-foreground">
-                    Page {page} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              )}
-            </>
+                       {/* Status Badge */}
+                       {product.status !== 'ACTIVE' && (
+                          <div className="absolute top-3 left-3 bg-white/90 text-[10px] font-bold uppercase tracking-widest px-2 py-1">
+                             {product.status.toLowerCase()}
+                          </div>
+                       )}
+
+                       {/* Quick Add Button - Slides up */}
+                       <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-10">
+                          <Button
+                             onClick={(e) => handleAddToCart(e, product)}
+                             disabled={loadingCart === product.id || product.status !== "ACTIVE"}
+                             className="w-full bg-white text-black hover:bg-black hover:text-white border-none shadow-lg text-xs font-bold uppercase tracking-widest h-10"
+                          >
+                             {loadingCart === product.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Add to Cart"}
+                          </Button>
+                       </div>
+                       
+                       {/* Wishlist Button - Top Right */}
+                       <button
+                          onClick={(e) => handleAddToWishlist(e, product.id)}
+                          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white text-black translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300"
+                       >
+                          {loadingWishlist === product.id ? (
+                             <Loader2 className="h-3 w-3 animate-spin block" />
+                          ) : (
+                             <Heart className="h-3 w-3 block hover:fill-red-500 hover:text-red-500 transition-colors" />
+                          )}
+                       </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className="text-center group-hover:translate-y-[-4px] transition-transform duration-300">
+                       <Link href={`/products/${product.id}`} className="block">
+                          <h3 className="text-sm font-bold uppercase tracking-tight mb-1 group-hover:text-gray-600 transition-colors line-clamp-1">
+                             {product.title}
+                          </h3>
+                       </Link>
+                       <p className="text-sm text-gray-500 font-medium">
+                          ${Number(product.price).toFixed(2)}
+                       </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
         </div>
       </div>

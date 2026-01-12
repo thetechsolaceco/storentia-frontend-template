@@ -3,17 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { sendOtp, verifyOtp } from '@/lib/apiClients/store/authentication';
 import { addMultipleToCart } from '@/lib/apiClients';
 
@@ -133,139 +127,135 @@ function LoginPage() {
 
   if (checking) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-200px)] py-10">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex items-center justify-center py-10">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-sm text-muted-foreground">Loading...</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-black" />
       </div>
     );
   }
 
   if (!storeConfigured) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-200px)] py-10">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-2xl text-red-600">Configuration Error</CardTitle>
-            <CardDescription>
-              Store configuration is missing
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-              {error}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center min-h-screen">
+          <p className="text-red-500">Store configuration missing</p>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-200px)] py-10">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            {step === 'email' 
-              ? 'Enter your email to receive an OTP'
-              : 'Enter the OTP sent to your email'
-            }
-          </CardDescription>
-        </CardHeader>
-        
-        {error && (
-          <div className="mx-6 mb-4 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-            {error}
-          </div>
-        )}
+    <div className="flex min-h-screen bg-white">
+      {/* Left Side - Editorial Image (Desktop Only) */}
+      <div className="hidden lg:block w-1/2 relative bg-black">
+         <div className="absolute inset-0 opacity-60 bg-black z-10" />
+         <Image 
+            src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop" 
+            alt="Editorial" 
+            fill 
+            className="object-cover" 
+            priority
+         />
+         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-white p-12 text-center">
+            <h2 className="text-5xl font-black uppercase tracking-tight mb-6">Milan Fashion</h2>
+            <p className="text-lg font-light tracking-widest uppercase max-w-md leading-relaxed">
+              "Elegance is not standing out, but being remembered."
+            </p>
+         </div>
+      </div>
 
-        {step === 'email' ? (
-          <form onSubmit={handleSendOtp}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
+      {/* Right Side - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-16 lg:p-24">
+         <div className="w-full max-w-md space-y-12">
+            
+            {/* Header */}
+            <div className="space-y-2 text-center lg:text-left">
+               <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight">
+                 {step === 'email' ? 'Welcome Back' : 'Verify Access'}
+               </h1>
+               <p className="text-gray-500 text-sm font-medium uppercase tracking-widest">
+                  {step === 'email' ? 'Enter your details to access your account' : 'Enter the code sent to your email'}
+               </p>
+            </div>
+
+            {error && (
+              <div className="p-4 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wide border-l-2 border-red-500">
+                {error}
               </div>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4 pt-6">
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Sending OTP...' : 'Send OTP'}
-              </Button>
-              <div className="text-center text-sm">
-                Don&rsquo;t have an account?{" "}
-                <Link href="/signup" className="text-primary hover:underline">
-                  Sign up
-                </Link>
-              </div>
-            </CardFooter>
-          </form>
-        ) : (
-          <form onSubmit={handleVerifyOtp}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  disabled
-                  className="bg-gray-50"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="otp">OTP</Label>
-                <Input
-                  id="otp"
-                  type="text"
-                  placeholder="123456"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  required
-                  disabled={loading}
-                  maxLength={6}
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4 pt-6">
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Verifying...' : 'Verify OTP'}
-              </Button>
-              <div className="flex justify-between text-sm">
-                <button
-                  type="button"
-                  onClick={handleBackToEmail}
-                  className="text-primary hover:underline"
-                  disabled={loading}
-                >
-                  Change email
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSendOtp}
-                  className="text-primary hover:underline"
-                  disabled={loading}
-                >
-                  Resend OTP
-                </button>
-              </div>
-            </CardFooter>
-          </form>
-        )}
-      </Card>
+            )}
+
+            {step === 'email' ? (
+              <form onSubmit={handleSendOtp} className="space-y-8">
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-gray-900">Email Address</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="name@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={loading}
+                      className="border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-12 bg-transparent placeholder:text-gray-300"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-6 pt-4">
+                   <Button 
+                      type="submit" 
+                      disabled={loading}
+                      className="w-full h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all"
+                   >
+                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continue with Email'}
+                   </Button>
+                   
+                   <div className="text-center">
+                      <Link href="/signup" className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+                        New Member? Create Account
+                      </Link>
+                   </div>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOtp} className="space-y-8">
+                 <div className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="otp" className="text-xs font-bold uppercase tracking-widest text-gray-900">Security Code</Label>
+                      <Input
+                        id="otp"
+                        type="text"
+                        placeholder="• • • • • •"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        required
+                        disabled={loading}
+                        maxLength={6}
+                        className="text-center text-2xl tracking-[1em] border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-16 bg-transparent"
+                      />
+                    </div>
+                 </div>
+
+                 <div className="space-y-6 pt-4">
+                   <Button 
+                      type="submit" 
+                      disabled={loading}
+                      className="w-full h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all"
+                   >
+                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify & Login'}
+                   </Button>
+                    
+                   <div className="flex justify-between items-center px-2">
+                      <button type="button" onClick={handleBackToEmail} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+                         Back
+                      </button>
+                      <button type="button" onClick={handleSendOtp} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+                         Resend Code
+                      </button>
+                   </div>
+                 </div>
+              </form>
+            )}
+         </div>
+      </div>
     </div>
   );
 }

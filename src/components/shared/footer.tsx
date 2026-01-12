@@ -2,154 +2,183 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Facebook, Instagram, Twitter, Youtube, Linkedin, Mail, Phone, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAppSelector } from "@/lib/store/hooks";
 import { selectStoreInfo } from "@/lib/store/storeSlice";
 import { getPublicContent, POLICY_KEYS, type ContentItem } from "@/lib/apiClients";
 
-// Predefined policy keys to show in footer (excluding about-us)
+// Predefined policy keys to check specifically if needed, 
+// though we will likely hardcode the specific links requested in the design
+// but keep the fetch to strictly preserve "integration".
 const FOOTER_POLICY_KEYS: string[] = [
   POLICY_KEYS.PRIVACY,
   POLICY_KEYS.TERMS,
-  POLICY_KEYS.SHIPPING,
-  POLICY_KEYS.REFUND,
 ];
 
 export function Footer() {
   const storeInfo = useAppSelector(selectStoreInfo);
-  const storeName = storeInfo?.name || "Store";
-  const social = storeInfo?.socialMediaUrls;
+  // We'll use "MILAN" to match the design, but keep storeInfo available if needed for other logic
+  
   const [policies, setPolicies] = useState<ContentItem[]>([]);
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     const fetchContent = async () => {
-      const result = await getPublicContent();
-      if (result.success && result.data) {
-        // Filter to only show predefined policy keys that exist
-        setPolicies(
-          result.data.filter((item) => FOOTER_POLICY_KEYS.includes(item.file_key))
-        );
+      try {
+        const result = await getPublicContent();
+        if (result.success && result.data) {
+           setPolicies(result.data.filter((item) => FOOTER_POLICY_KEYS.includes(item.file_key)));
+        }
+      } catch (error) {
+        console.error("Failed to fetch policies", error);
       }
     };
     fetchContent();
   }, []);
 
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Placeholder for newsletter subscription logic
+    console.log("Subscribing email:", email);
+    setEmail("");
+    alert("Thank you for subscribing!");
+  };
+
   return (
-    <footer className="bg-muted/50 border-t">
-      <div className="container py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="md:col-span-1 space-y-4">
-            <h3 className="text-lg font-bold">{storeName}</h3>
-            {storeInfo?.description && (
-              <p className="text-sm text-muted-foreground">
-                {storeInfo.description.length > 120
-                  ? storeInfo.description.slice(0, 120) + "..."
-                  : storeInfo.description}
-              </p>
-            )}
+    <footer className="bg-white pt-16 md:pt-24 pb-0">
+      <div className="container mb-16 md:mb-24">
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
+          
+          {/* Left Side: Brand & Newsletter */}
+          <div className="lg:w-1/3 space-y-6">
+            <h1 className="text-5xl font-bold uppercase tracking-tight text-black">
+              MILAN
+            </h1>
+            <p className="text-sm text-gray-500 font-medium uppercase leading-relaxed max-w-sm">
+              Get newsletter update for upcoming products and best offers and discount for all items
+            </p>
+            <form onSubmit={handleSubscribe} className="flex gap-4 max-w-md">
+               <Input 
+                 type="email" 
+                 placeholder="YOUR EMAIL" 
+                 value={email}
+                 onChange={(e) => setEmail(e.target.value)}
+                 className="rounded-full h-12 px-6 border-gray-300 text-xs tracking-wider uppercase placeholder:text-gray-400 focus-visible:ring-black"
+                 required
+               />
+               <Button 
+                 type="submit" 
+                 className="rounded-full h-12 px-8 bg-black text-white hover:bg-gray-800 text-xs font-bold tracking-widest uppercase"
+               >
+                 Submit
+               </Button>
+            </form>
+          </div>
+
+          {/* Right Side: Links Columns */}
+          <div className="lg:w-2/3 grid grid-cols-2 md:grid-cols-3 gap-8">
             
-            {/* Social Links */}
-            {social && (
-              <div className="flex items-center gap-3 pt-2">
-                {social.facebook && (
-                  <a href={social.facebook} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                    <Facebook className="h-5 w-5" />
-                  </a>
-                )}
-                {social.instagram && (
-                  <a href={social.instagram} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                    <Instagram className="h-5 w-5" />
-                  </a>
-                )}
-                {social.twitter && (
-                  <a href={social.twitter} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                    <Twitter className="h-5 w-5" />
-                  </a>
-                )}
-                {social.youtube && (
-                  <a href={social.youtube} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                    <Youtube className="h-5 w-5" />
-                  </a>
-                )}
-                {social.linkedin && (
-                  <a href={social.linkedin} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                    <Linkedin className="h-5 w-5" />
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Shop Links */}
-          <div>
-            <h3 className="text-sm font-semibold mb-4 uppercase tracking-wider">Shop</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/" className="text-muted-foreground hover:text-primary">Home</Link>
-              </li>
-              <li>
-                <Link href="/products" className="text-muted-foreground hover:text-primary">All Products</Link>
-              </li>
-              <li>
-                <Link href="/about" className="text-muted-foreground hover:text-primary">About Us</Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-muted-foreground hover:text-primary">Contact</Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Policies */}
-          {policies.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold mb-4 uppercase tracking-wider">Policies</h3>
-              <ul className="space-y-2 text-sm">
-                {policies.map((policy) => (
-                  <li key={policy.id}>
-                    <Link 
-                      href={`/policy/${policy.file_key}`} 
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      {policy.file_data.title}
+            {/* PRODUCT Column */}
+            <div className="space-y-6">
+              <h3 className="text-base font-bold uppercase tracking-wide text-black">Product</h3>
+              <ul className="space-y-3">
+                {[
+                  { name: "T-Shirt", href: "/products?category=tshirts" },
+                  { name: "Hoodie", href: "/products?category=hoodie" },
+                  { name: "Jacket", href: "/products?category=jacket" },
+                  { name: "Jeans", href: "/products?category=jeans" },
+                  { name: "Hand Bags", href: "/products?category=bags" },
+                  { name: "Sneakers", href: "/products?category=sneakers" },
+                ].map((item) => (
+                  <li key={item.name}>
+                    <Link href={item.href} className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
+                      {item.name}
                     </Link>
                   </li>
                 ))}
               </ul>
             </div>
-          )}
 
-          {/* Contact Info */}
-          <div>
-            <h3 className="text-sm font-semibold mb-4 uppercase tracking-wider">Contact</h3>
-            <ul className="space-y-3 text-sm">
-              {storeInfo?.contactEmail && (
-                <li>
-                  <a href={`mailto:${storeInfo.contactEmail}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
-                    <Mail className="h-4 w-4" />
-                    {storeInfo.contactEmail}
-                  </a>
-                </li>
-              )}
-              {storeInfo?.mobile && (
-                <li>
-                  <a href={`tel:${storeInfo.mobile}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
-                    <Phone className="h-4 w-4" />
-                    {storeInfo.mobile}
-                  </a>
-                </li>
-              )}
-              {storeInfo?.address && (
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span className="text-xs">{storeInfo.address}</span>
-                </li>
-              )}
-            </ul>
+            {/* CATEGORIES Column */}
+            <div className="space-y-6">
+              <h3 className="text-base font-bold uppercase tracking-wide text-black">Categories</h3>
+              <ul className="space-y-3">
+                 {[
+                  { name: "Men", href: "/products?gender=men" },
+                  { name: "Women", href: "/products?gender=women" },
+                  { name: "Kids", href: "/products?gender=kids" },
+                  { name: "Gift", href: "/products?category=gifts" },
+                  { name: "Collection", href: "/products" },
+                  { name: "New Arrivals", href: "/products?sort=newest" },
+                ].map((item) => (
+                  <li key={item.name}>
+                    <Link href={item.href} className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* HELP Column */}
+            <div className="space-y-6">
+              <h3 className="text-base font-bold uppercase tracking-wide text-black">Help</h3>
+              <ul className="space-y-3">
+                  <li>
+                    <Link href="/contact" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
+                      Customer Service
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/profile" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
+                      My MFW
+                    </Link>
+                  </li>
+                   <li>
+                    <Link href="#" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
+                      Find a Store
+                    </Link>
+                  </li>
+                   {/* Dynamic Policy Links if available, else static */}
+                   {policies.length > 0 ? (
+                      policies.map(p => (
+                         <li key={p.id}>
+                            <Link href={`/policy/${p.file_key}`} className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
+                              {p.file_data.title}
+                            </Link>
+                         </li>
+                      ))
+                   ) : (
+                      <li>
+                        <Link href="/policy/privacy-policy" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
+                          Legal & Privacy
+                        </Link>
+                      </li>
+                   )}
+                  <li>
+                    <Link href="/contact" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
+                      Contant
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="#" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
+                      Cockie Notice
+                    </Link>
+                  </li>
+              </ul>
+            </div>
+
           </div>
         </div>
+      </div>
 
-        <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} {storeName}. All rights reserved.
+      {/* Bottom Copyright Bar */}
+      <div className="w-full bg-[#111111] py-6">
+        <div className="container">
+           <p className="text-xs text-white/80 font-medium tracking-wide uppercase">
+             &copy; 2025 Milan Allrights Reserved.
+           </p>
         </div>
       </div>
     </footer>
