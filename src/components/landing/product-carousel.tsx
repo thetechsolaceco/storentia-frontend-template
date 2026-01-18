@@ -6,11 +6,11 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { ProductCard } from "@/components/shared/product-card";
-import { Product } from "@/types";
+import { type StoreProduct } from "@/lib/apiClients";
 
 interface ProductCarouselProps {
   title: string;
-  products: Product[];
+  products: StoreProduct[];
 }
 
 export function ProductCarousel({ title, products }: ProductCarouselProps) {
