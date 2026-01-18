@@ -53,7 +53,7 @@ export function Footer() {
           {/* Left Side: Brand & Newsletter */}
           <div className="lg:w-1/3 space-y-6">
             <h1 className="text-5xl font-bold uppercase tracking-tight text-black">
-              MILAN
+             Store Name
             </h1>
             <p className="text-sm text-gray-500 font-medium uppercase leading-relaxed max-w-sm">
               Get newsletter update for upcoming products and best offers and discount for all items
@@ -79,45 +79,20 @@ export function Footer() {
           {/* Right Side: Links Columns */}
           <div className="lg:w-2/3 grid grid-cols-2 md:grid-cols-3 gap-8">
             
-            {/* PRODUCT Column */}
+            {/* SHOP Column */}
             <div className="space-y-6">
-              <h3 className="text-base font-bold uppercase tracking-wide text-black">Product</h3>
+              <h3 className="text-base font-bold uppercase tracking-wide text-black">Shop</h3>
               <ul className="space-y-3">
-                {[
-                  { name: "T-Shirt", href: "/products?category=tshirts" },
-                  { name: "Hoodie", href: "/products?category=hoodie" },
-                  { name: "Jacket", href: "/products?category=jacket" },
-                  { name: "Jeans", href: "/products?category=jeans" },
-                  { name: "Hand Bags", href: "/products?category=bags" },
-                  { name: "Sneakers", href: "/products?category=sneakers" },
-                ].map((item) => (
-                  <li key={item.name}>
-                    <Link href={item.href} className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
-                      {item.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* CATEGORIES Column */}
-            <div className="space-y-6">
-              <h3 className="text-base font-bold uppercase tracking-wide text-black">Categories</h3>
-              <ul className="space-y-3">
-                 {[
-                  { name: "Men", href: "/products?gender=men" },
-                  { name: "Women", href: "/products?gender=women" },
-                  { name: "Kids", href: "/products?gender=kids" },
-                  { name: "Gift", href: "/products?category=gifts" },
-                  { name: "Collection", href: "/products" },
-                  { name: "New Arrivals", href: "/products?sort=newest" },
-                ].map((item) => (
-                  <li key={item.name}>
-                    <Link href={item.href} className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
-                      {item.name}
-                    </Link>
-                  </li>
-                ))}
+                <li>
+                  <Link href="/products" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
+                    All Products
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/products?sort=newest" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
+                    New Arrivals
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -127,17 +102,12 @@ export function Footer() {
               <ul className="space-y-3">
                   <li>
                     <Link href="/contact" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
-                      Customer Service
+                      Contact Us
                     </Link>
                   </li>
                   <li>
                     <Link href="/profile" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
-                      My MFW
-                    </Link>
-                  </li>
-                   <li>
-                    <Link href="#" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
-                      Find a Store
+                      My Account
                     </Link>
                   </li>
                    {/* Dynamic Policy Links if available, else static */}
@@ -156,16 +126,6 @@ export function Footer() {
                         </Link>
                       </li>
                    )}
-                  <li>
-                    <Link href="/contact" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
-                      Contant
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="#" className="text-xs text-gray-500 hover:text-black font-medium uppercase tracking-wide transition-colors">
-                      Cockie Notice
-                    </Link>
-                  </li>
               </ul>
             </div>
 

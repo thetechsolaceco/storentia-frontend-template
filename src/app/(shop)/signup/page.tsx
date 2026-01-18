@@ -142,146 +142,130 @@ function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-white">
-      {/* Left Side - Editorial Image (Desktop Only) */}
-      <div className="hidden lg:block w-1/2 relative bg-black">
-         <div className="absolute inset-0 opacity-40 bg-black z-10" />
-         <Image 
-            src="https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=1888&auto=format&fit=crop" 
-            alt="Editorial" 
-            fill 
-            className="object-cover" 
-            priority
-         />
-         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-white p-12 text-center">
-            <h2 className="text-5xl font-black uppercase tracking-tight mb-6">Join The Club</h2>
-            <p className="text-lg font-light tracking-widest uppercase max-w-md leading-relaxed">
-              "Style is a way to say who you are without having to speak."
-            </p>
-         </div>
-      </div>
-
-      {/* Right Side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-16 lg:p-24">
-         <div className="w-full max-w-md space-y-12">
-            
-            {/* Header */}
-            <div className="space-y-2 text-center lg:text-left">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
+       <div className="w-full max-w-md space-y-12">
+          
+          {/* Header */}
+          <div className="space-y-4 text-center">
+             <Link href="/" className="inline-block mb-8">
+               <span className="text-2xl font-black font-serif uppercase tracking-tighter">STORENTIA</span>
+             </Link>
+             <div className="space-y-2">
                <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight">
                  {step === 'details' ? 'Create Account' : 'Verify Email'}
                </h1>
                <p className="text-gray-500 text-sm font-medium uppercase tracking-widest">
                   {step === 'details' ? 'Enter your details to get started' : 'Enter the code sent to your email'}
                </p>
+             </div>
+          </div>
+
+          {error && (
+            <div className="p-4 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wide border-l-2 border-red-500">
+              {error}
             </div>
+          )}
 
-            {error && (
-              <div className="p-4 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wide border-l-2 border-red-500">
-                {error}
-              </div>
-            )}
-
-            {step === 'details' ? (
-              <form onSubmit={handleSendOtp} className="space-y-8">
-                <div className="space-y-6">
-                   <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName" className="text-xs font-bold uppercase tracking-widest text-gray-900">First Name</Label>
-                        <Input 
-                          id="firstName" 
-                          placeholder="John" 
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          required 
-                          disabled={loading}
-                          className="border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-12 bg-transparent placeholder:text-gray-300"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName" className="text-xs font-bold uppercase tracking-widest text-gray-900">Last Name</Label>
-                        <Input 
-                          id="lastName" 
-                          placeholder="Doe" 
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          required 
-                          disabled={loading}
-                          className="border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-12 bg-transparent placeholder:text-gray-300"
-                        />
-                      </div>
-                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-gray-900">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="name@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      disabled={loading}
-                      className="border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-12 bg-transparent placeholder:text-gray-300"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-6 pt-4">
-                   <Button 
-                      type="submit" 
-                      disabled={loading}
-                      className="w-full h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all"
-                   >
-                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Account'}
-                   </Button>
-                   
-                   <div className="text-center">
-                      <Link href="/login" className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
-                        Already a Member? Login
-                      </Link>
-                   </div>
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyOtp} className="space-y-8">
-                 <div className="space-y-6">
+          {step === 'details' ? (
+            <form onSubmit={handleSendOtp} className="space-y-8">
+              <div className="space-y-6">
+                 <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="otp" className="text-xs font-bold uppercase tracking-widest text-gray-900">Security Code</Label>
-                      <Input
-                        id="otp"
-                        type="text"
-                        placeholder="• • • • • •"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        required
+                      <Label htmlFor="firstName" className="text-xs font-bold uppercase tracking-widest text-gray-900">First Name</Label>
+                      <Input 
+                        id="firstName" 
+                        placeholder="John" 
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required 
                         disabled={loading}
-                        maxLength={6}
-                        className="text-center text-2xl tracking-[1em] border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-16 bg-transparent"
+                        className="border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-12 bg-transparent placeholder:text-gray-300"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName" className="text-xs font-bold uppercase tracking-widest text-gray-900">Last Name</Label>
+                      <Input 
+                        id="lastName" 
+                        placeholder="Doe" 
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        required 
+                        disabled={loading}
+                        className="border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-12 bg-transparent placeholder:text-gray-300"
                       />
                     </div>
                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-gray-900">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                    className="border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-12 bg-transparent placeholder:text-gray-300"
+                  />
+                </div>
+              </div>
 
-                 <div className="space-y-6 pt-4">
-                   <Button 
-                      type="submit" 
-                      disabled={loading}
-                      className="w-full h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all"
-                   >
-                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Complete Signup'}
-                   </Button>
-                    
-                   <div className="flex justify-between items-center px-2">
-                      <button type="button" onClick={handleBackToDetails} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
-                         Back
-                      </button>
-                      <button type="button" onClick={handleSendOtp} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
-                         Resend Code
-                      </button>
-                   </div>
+              <div className="space-y-6 pt-4">
+                 <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all"
+                 >
+                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Account'}
+                 </Button>
+                 
+                 <div className="text-center">
+                    <Link href="/login" className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+                      Already a Member? Login
+                    </Link>
                  </div>
-              </form>
-            )}
-         </div>
-      </div>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-8">
+               <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="otp" className="text-xs font-bold uppercase tracking-widest text-gray-900">Security Code</Label>
+                    <Input
+                      id="otp"
+                      type="text"
+                      placeholder="• • • • • •"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      required
+                      disabled={loading}
+                      maxLength={6}
+                      className="text-center text-2xl tracking-[1em] border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-16 bg-transparent"
+                    />
+                  </div>
+               </div>
+
+               <div className="space-y-6 pt-4">
+                 <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all"
+                 >
+                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Complete Signup'}
+                 </Button>
+                  
+                 <div className="flex justify-between items-center px-2">
+                    <button type="button" onClick={handleBackToDetails} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+                       Back
+                    </button>
+                    <button type="button" onClick={handleSendOtp} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+                       Resend Code
+                    </button>
+                 </div>
+               </div>
+            </form>
+          )}
+       </div>
     </div>
   );
 }

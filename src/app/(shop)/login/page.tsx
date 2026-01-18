@@ -142,120 +142,104 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-white">
-      {/* Left Side - Editorial Image (Desktop Only) */}
-      <div className="hidden lg:block w-1/2 relative bg-black">
-         <div className="absolute inset-0 opacity-60 bg-black z-10" />
-         <Image 
-            src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop" 
-            alt="Editorial" 
-            fill 
-            className="object-cover" 
-            priority
-         />
-         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-white p-12 text-center">
-            <h2 className="text-5xl font-black uppercase tracking-tight mb-6">Milan Fashion</h2>
-            <p className="text-lg font-light tracking-widest uppercase max-w-md leading-relaxed">
-              "Elegance is not standing out, but being remembered."
-            </p>
-         </div>
-      </div>
-
-      {/* Right Side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-16 lg:p-24">
-         <div className="w-full max-w-md space-y-12">
-            
-            {/* Header */}
-            <div className="space-y-2 text-center lg:text-left">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
+       <div className="w-full max-w-md space-y-12">
+          
+          {/* Header */}
+          <div className="space-y-4 text-center">
+             <Link href="/" className="inline-block mb-8">
+               <span className="text-2xl font-black font-serif uppercase tracking-tighter">STORENTIA</span>
+             </Link>
+             <div className="space-y-2">
                <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight">
                  {step === 'email' ? 'Welcome Back' : 'Verify Access'}
                </h1>
                <p className="text-gray-500 text-sm font-medium uppercase tracking-widest">
-                  {step === 'email' ? 'Enter your details to access your account' : 'Enter the code sent to your email'}
+                 {step === 'email' ? 'Enter your details to access your account' : 'Enter the code sent to your email'}
                </p>
+             </div>
+          </div>
+
+          {error && (
+            <div className="p-4 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wide border-l-2 border-red-500">
+              {error}
             </div>
+          )}
 
-            {error && (
-              <div className="p-4 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wide border-l-2 border-red-500">
-                {error}
+          {step === 'email' ? (
+            <form onSubmit={handleSendOtp} className="space-y-8">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-gray-900">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                    className="border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-12 bg-transparent placeholder:text-gray-300"
+                  />
+                </div>
               </div>
-            )}
 
-            {step === 'email' ? (
-              <form onSubmit={handleSendOtp} className="space-y-8">
-                <div className="space-y-6">
+              <div className="space-y-6 pt-4">
+                 <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all"
+                 >
+                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continue with Email'}
+                 </Button>
+                 
+                 <div className="text-center">
+                    <Link href="/signup" className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+                      New Member? Create Account
+                    </Link>
+                 </div>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-8">
+               <div className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-gray-900">Email Address</Label>
+                    <Label htmlFor="otp" className="text-xs font-bold uppercase tracking-widest text-gray-900">Security Code</Label>
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="name@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="otp"
+                      type="text"
+                      placeholder="• • • • • •"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
                       required
                       disabled={loading}
-                      className="border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-12 bg-transparent placeholder:text-gray-300"
+                      maxLength={6}
+                      className="text-center text-2xl tracking-[1em] border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-16 bg-transparent"
                     />
                   </div>
-                </div>
+               </div>
 
-                <div className="space-y-6 pt-4">
-                   <Button 
-                      type="submit" 
-                      disabled={loading}
-                      className="w-full h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all"
-                   >
-                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continue with Email'}
-                   </Button>
-                   
-                   <div className="text-center">
-                      <Link href="/signup" className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
-                        New Member? Create Account
-                      </Link>
-                   </div>
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyOtp} className="space-y-8">
-                 <div className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="otp" className="text-xs font-bold uppercase tracking-widest text-gray-900">Security Code</Label>
-                      <Input
-                        id="otp"
-                        type="text"
-                        placeholder="• • • • • •"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        required
-                        disabled={loading}
-                        maxLength={6}
-                        className="text-center text-2xl tracking-[1em] border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-16 bg-transparent"
-                      />
-                    </div>
+               <div className="space-y-6 pt-4">
+                 <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all"
+                 >
+                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify & Login'}
+                 </Button>
+                  
+                 <div className="flex justify-between items-center px-2">
+                    <button type="button" onClick={handleBackToEmail} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+                       Back
+                    </button>
+                    <button type="button" onClick={handleSendOtp} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+                       Resend Code
+                    </button>
                  </div>
-
-                 <div className="space-y-6 pt-4">
-                   <Button 
-                      type="submit" 
-                      disabled={loading}
-                      className="w-full h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all"
-                   >
-                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify & Login'}
-                   </Button>
-                    
-                   <div className="flex justify-between items-center px-2">
-                      <button type="button" onClick={handleBackToEmail} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
-                         Back
-                      </button>
-                      <button type="button" onClick={handleSendOtp} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
-                         Resend Code
-                      </button>
-                   </div>
-                 </div>
-              </form>
-            )}
-         </div>
-      </div>
+               </div>
+            </form>
+          )}
+       </div>
     </div>
   );
 }

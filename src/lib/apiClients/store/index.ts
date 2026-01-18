@@ -43,10 +43,7 @@ export interface StoreProductImage {
 }
 
 export interface ProductCollection {
-  id: string;
-  productId: string;
   collectionId: string;
-  createdAt: string;
   collection: {
     id: string;
     title: string;
@@ -58,10 +55,14 @@ export interface StoreProduct {
   title: string;
   description?: string;
   price: number;
+  sku?: string | null;
+  stock?: number;
   storeId: string;
   status: "ACTIVE" | "DRAFT" | "UNLISTED";
   createdAt: string;
   updatedAt: string;
+  udf1?: string | null;
+  udf2?: string | null;
   user_cartId?: string | null;
   images: StoreProductImage[];
   collections: ProductCollection[];
@@ -97,15 +98,26 @@ export interface PublicProductParams {
   search?: string;
 }
 
-export interface StoreCollection {
+export interface StoreCollectionDetails {
   id: string;
   title: string;
   description?: string;
+  storeId: string;
+  parentId?: string | null;
   imageId?: string | null;
-  image?: string | null;
-  products?: unknown[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface StoreCollection {
+  collections: StoreCollectionDetails;
+  product_collection_mapping?: {
+    id: string;
+    productId: string;
+    collectionId: string;
+    createdAt: string;
+  };
+  media?: unknown;
 }
 
 export interface StoreCollectionsResponse {

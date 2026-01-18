@@ -238,7 +238,7 @@ export default function ProductPage() {
                    </h1>
                    <div className="flex items-center justify-between">
                       <p className="text-2xl md:text-3xl font-medium text-black">
-                        ${product.price.toFixed(2)}
+                        ${Number(product.price).toFixed(2)}
                       </p>
                       <div className="flex items-center gap-1">
                           {[...Array(5)].map((_, i) => (

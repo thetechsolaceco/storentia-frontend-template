@@ -18,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ProductCard } from "@/components/shared/product-card";
 import { Loader2, ShoppingCart, Heart, Minus, Plus, Check } from "lucide-react";
 import {
   storeAPI,
@@ -38,6 +39,7 @@ function ProductsContent() {
   const dispatch = useAppDispatch();
   const { isInCart, getItemQuantity, isAuth } = useCart();
   const initialSearch = searchParams.get("search") || "";
+  const initialCollection = searchParams.get("collection") || null;
 
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [collections, setCollections] = useState<StoreCollection[]>([]);
@@ -47,7 +49,7 @@ function ProductsContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(
-    null
+    initialCollection
   );
   const [loadingCart, setLoadingCart] = useState<string | null>(null);
   const [loadingWishlist, setLoadingWishlist] = useState<string | null>(null);
@@ -58,7 +60,16 @@ function ProductsContent() {
     try {
       const response = await storeAPI.getPublicCollections({ limit: 50 });
       if (response.success && response.data?.collections) {
-        setCollections(response.data.collections);
+        // Deduplicate collections based on the inner collection ID
+        const uniqueCollectionsMap = new Map();
+        response.data.collections.forEach(item => {
+           if (item.collections && item.collections.id) {
+               if(!uniqueCollectionsMap.has(item.collections.id)) {
+                   uniqueCollectionsMap.set(item.collections.id, item);
+               }
+           }
+        });
+        setCollections(Array.from(uniqueCollectionsMap.values()));
       }
     } catch (err) {
       console.error("Failed to load collections:", err);
@@ -110,12 +121,14 @@ function ProductsContent() {
   // Sync state with URL search params
   useEffect(() => {
     const query = searchParams.get("search") || "";
+    const collectionParam = searchParams.get("collection") || null;
+    
     if (query !== searchTerm) {
       setSearchTerm(query);
-      // We need to fetch products when URL changes.
-      // Ideally we should depend on searchTerm in fetchProducts or add it to dependency array of the main fetch effect.
-      // But fetchProducts reads the *current* state of searchTerm.
-      // If we just set state here, it might not be updated in the closure of an immediate fetch call unless we add it to deps.
+    }
+    if (collectionParam !== selectedCollection) {
+      setSelectedCollection(collectionParam);
+      setPage(1);
     }
   }, [searchParams]);
 
@@ -138,10 +151,20 @@ function ProductsContent() {
   };
 
   const handleCollectionChange = (collectionId: string) => {
-    setSelectedCollection(
-      selectedCollection === collectionId ? null : collectionId
-    );
-    setPage(1);
+    const newCollection = selectedCollection === collectionId ? null : collectionId;
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (newCollection) {
+      params.set("collection", newCollection);
+    } else {
+      params.delete("collection");
+    }
+    
+    // Reset page logic handled in useEffect or manually here if needed, 
+    // but useEffect above resets page when collectionParam changes.
+    // However, existing simple state logic was just changing state.
+    // We should push to router.
+    router.push(`/products?${params.toString()}`);
   };
 
   const handleAddToCart = async (e: React.MouseEvent, product: StoreProduct) => {
@@ -222,7 +245,7 @@ function ProductsContent() {
   }
 
   return (
-    <div className="container py-10 md:py-20 px-4 md:px-6">
+    <div className="container px-4 md:px-6 pt-32 pb-20 ">
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Sidebar Filters */}
         <aside className="w-full lg:w-64 space-y-8 shrink-0">
@@ -255,26 +278,26 @@ function ProductsContent() {
                   ) : (
                     collections.map((collection, index) => (
                       <div
-                        key={`${collection.id}-${index}`}
+                        key={`${collection.collections.id}-${index}`}
                         className="flex items-center space-x-3 group cursor-pointer"
-                        onClick={() => handleCollectionChange(collection.id)}
+                        onClick={() => handleCollectionChange(collection.collections.id)}
                       >
-                         <div className={`w-3 h-3 border rounded-sm flex items-center justify-center transition-colors ${selectedCollection === collection.id ? 'bg-black border-black' : 'border-gray-300 group-hover:border-black'}`}>
-                            {selectedCollection === collection.id && <Check className="h-2 w-2 text-white" />}
+                         <div className={`w-3 h-3 border rounded-sm flex items-center justify-center transition-colors ${selectedCollection === collection.collections.id ? 'bg-black border-black' : 'border-gray-300 group-hover:border-black'}`}>
+                            {selectedCollection === collection.collections.id && <Check className="h-2 w-2 text-white" />}
                          </div>
-                        <span className={`text-sm transition-colors ${selectedCollection === collection.id ? 'text-black font-medium' : 'text-gray-600 group-hover:text-black'}`}>
-                          {collection.title}
+                        <span className={`text-sm transition-colors ${selectedCollection === collection.collections.id ? 'text-black font-medium' : 'text-gray-600 group-hover:text-black'}`}>
+                          {collection.collections.title}
                         </span>
                       </div>
                     ))
                   )}
                 </div>
                 {selectedCollection && (
-                  <Button
+                    <Button
                     variant="link"
                     size="sm"
                     className="mt-2 text-[10px] uppercase tracking-widest text-gray-400 hover:text-red-500 h-auto p-0"
-                    onClick={() => setSelectedCollection(null)}
+                    onClick={() => handleCollectionChange(selectedCollection)}
                   >
                     Clear Filter
                   </Button>
@@ -290,8 +313,8 @@ function ProductsContent() {
             <div>
               <h1 className="text-4xl font-black uppercase tracking-tight leading-none mb-2">
                 {selectedCollection
-                  ? collections.find((c) => c.id === selectedCollection)
-                      ?.title || "Collection"
+                  ? collections.find((c) => c.collections.id === selectedCollection)
+                      ?.collections.title || "Collection"
                   : "All Products"}
               </h1>
               <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">
@@ -325,77 +348,22 @@ function ProductsContent() {
                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12"
             >
               <AnimatePresence>
-                {products.map((product) => (
+{products.map((product, index) => (
                   <motion.div
                     key={product.id}
                     variants={{
                       hidden: { opacity: 0, y: 20 },
                       visible: { opacity: 1, y: 0 }
                     }}
-                    className="group"
                   >
-                    {/* Image Container */}
-                    <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden mb-4 cursor-pointer" onClick={() => router.push(`/products/${product.id}`)}>
-                       {product.images?.[0]?.url ? (
-                          <div className="w-full h-full relative">
-                            <Image
-                                src={product.images[0].url}
-                                alt={product.title}
-                                fill
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                            />
-                             {/* Overlay on hover */}
-                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                          </div>
-                       ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300">
-                             <div className="w-10 h-10 border-2 border-current rounded-full flex items-center justify-center">?</div>
-                          </div>
-                       )}
-
-                       {/* Status Badge */}
-                       {product.status !== 'ACTIVE' && (
-                          <div className="absolute top-3 left-3 bg-white/90 text-[10px] font-bold uppercase tracking-widest px-2 py-1">
-                             {product.status.toLowerCase()}
-                          </div>
-                       )}
-
-                       {/* Quick Add Button - Slides up */}
-                       <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-10">
-                          <Button
-                             onClick={(e) => handleAddToCart(e, product)}
-                             disabled={loadingCart === product.id || product.status !== "ACTIVE"}
-                             className="w-full bg-white text-black hover:bg-black hover:text-white border-none shadow-lg text-xs font-bold uppercase tracking-widest h-10"
-                          >
-                             {loadingCart === product.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Add to Cart"}
-                          </Button>
-                       </div>
-                       
-                       {/* Wishlist Button - Top Right */}
-                       <button
-                          onClick={(e) => handleAddToWishlist(e, product.id)}
-                          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white text-black translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300"
-                       >
-                          {loadingWishlist === product.id ? (
-                             <Loader2 className="h-3 w-3 animate-spin block" />
-                          ) : (
-                             <Heart className="h-3 w-3 block hover:fill-red-500 hover:text-red-500 transition-colors" />
-                          )}
-                       </button>
-                    </div>
-
-                    {/* Content */}
-                    <div className="text-center group-hover:translate-y-[-4px] transition-transform duration-300">
-                       <Link href={`/products/${product.id}`} className="block">
-                          <h3 className="text-sm font-bold uppercase tracking-tight mb-1 group-hover:text-gray-600 transition-colors line-clamp-1">
-                             {product.title}
-                          </h3>
-                       </Link>
-                       <p className="text-sm text-gray-500 font-medium">
-                          ${Number(product.price).toFixed(2)}
-                       </p>
-                    </div>
+                    <ProductCard
+                      product={product}
+                      onAddToCart={handleAddToCart}
+                      onAddToWishlist={handleAddToWishlist}
+                      loading={loadingCart === product.id}
+                      loadingWishlist={loadingWishlist === product.id}
+                      priority={index < 4}
+                    />
                   </motion.div>
                 ))}
               </AnimatePresence>

@@ -1,64 +1,85 @@
-import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingCart } from "lucide-react";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Product } from "@/types";
+import { type StoreProduct } from "@/lib/apiClients";
+import { Loader2, Heart } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
-  product: Product;
+  product: StoreProduct;
+  onAddToCart?: (e: React.MouseEvent<HTMLButtonElement>, product: StoreProduct) => void;
+  onAddToWishlist?: (e: React.MouseEvent<HTMLButtonElement>, productId: string) => void;
+  loading?: boolean;
+  loadingWishlist?: boolean;
+  priority?: boolean;
+  className?: string;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, onAddToCart, onAddToWishlist, loading, loadingWishlist, priority = false, className }: ProductCardProps) {
   return (
-    <Card className="group overflow-hidden border-none shadow-none hover:shadow-md transition-shadow">
-      <div className="relative aspect-square overflow-hidden rounded-t-lg bg-muted">
-        <Image
-          src={product.image}
-          alt={product.name}
-          fill
-          className="object-cover transition-transform group-hover:scale-105"
-        />
-        {product.isNew && (
-          <Badge className="absolute left-2 top-2 bg-primary text-primary-foreground">
-            New
-          </Badge>
+    <div className={cn("group relative cursor-pointer", className)}>
+      <div className="aspect-[3/4] w-full overflow-hidden rounded-2xl bg-gray-100 relative mb-4">
+        {/* Main Link covers the image area except the button */}
+        <Link href={`/products/${product.id}`} className="absolute inset-0 z-0">
+          <span className="sr-only">View {product.title}</span>
+        </Link>
+        
+        {product.images?.[0]?.url ? (
+          <Image
+            src={product.images[0].url}
+            alt={product.title}
+            fill
+            priority={priority}
+            className="object-cover transition-transform duration-700 ease-in-out group-hover:scale-110"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
         )}
-        {product.isTrending && !product.isNew && (
-          <Badge variant="secondary" className="absolute left-2 top-2">
-            Trending
-          </Badge>
+        
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        
+        {/* Wishlist Button */}
+        {onAddToWishlist && (
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onAddToWishlist(e, product.id);
+                }}
+                className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white text-black translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10"
+            >
+                {loadingWishlist ? (
+                    <Loader2 className="h-3 w-3 animate-spin block" />
+                ) : (
+                    <Heart className="h-3 w-3 block hover:fill-red-500 hover:text-red-500 transition-colors" />
+                )}
+            </button>
         )}
-        <div className="absolute right-2 top-2 flex flex-col gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-8 w-8 rounded-full"
-          >
-            <Heart className="h-4 w-4" />
-            <span className="sr-only">Add to wishlist</span>
-          </Button>
+        
+        {/* Add to Cart Button */}
+        <div className="absolute bottom-4 left-4 right-4 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out z-10">
+            <Button 
+              onClick={(e) => {
+                 e.stopPropagation(); // Prevent link click
+                 if (onAddToCart) {
+                     onAddToCart(e, product);
+                 }
+              }}
+              disabled={loading || product.status !== "ACTIVE"}
+              className="w-full rounded-full bg-[#1A3C34] text-white hover:bg-[#142e28] hover:text-white font-bold font-sans uppercase tracking-wider text-xs shadow-lg h-10 border-none"
+            >
+               {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Add to Cart"}
+            </Button>
         </div>
       </div>
-      <CardContent className="p-4">
-        <div className="text-sm text-muted-foreground mb-1">
-          {product.category}
-        </div>
-        <Link
-          href={`/products/${product.id}`}
-          className="font-semibold hover:underline line-clamp-1"
-        >
-          {product.name}
+      
+      <div className="text-center space-y-1">
+        <Link href={`/products/${product.id}`} className="block">
+           <h3 className="text-sm font-bold font-serif uppercase tracking-wide text-black line-clamp-1 group-hover:text-gray-600 transition-colors">{product.title}</h3>
         </Link>
-        <div className="mt-2 font-bold">${product.price.toFixed(2)}</div>
-      </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button className="w-full gap-2">
-          <ShoppingCart className="h-4 w-4" />
-          Add to Cart
-        </Button>
-      </CardFooter>
-    </Card>
+        <p className="text-sm font-medium font-sans text-gray-900">${Number(product.price).toFixed(2)}</p>
+      </div>
+    </div>
   );
 }
