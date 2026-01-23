@@ -142,104 +142,123 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4">
-       <div className="w-full max-w-md space-y-12">
-          
-          {/* Header */}
-          <div className="space-y-4 text-center">
-             <Link href="/" className="inline-block mb-8">
-               <span className="text-2xl font-black font-serif uppercase tracking-tighter">STORENTIA</span>
-             </Link>
-             <div className="space-y-2">
-               <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight">
-                 {step === 'email' ? 'Welcome Back' : 'Verify Access'}
-               </h1>
-               <p className="text-gray-500 text-sm font-medium uppercase tracking-widest">
-                 {step === 'email' ? 'Enter your details to access your account' : 'Enter the code sent to your email'}
-               </p>
-             </div>
-          </div>
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+      {/* Left (Image) */}
+      <div className="relative hidden lg:block bg-gray-100">
+         <Image
+            src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=2670&auto=format&fit=crop"
+            alt="Editorial"
+            fill
+            className="object-cover grayscale hover:grayscale-0 transition-all duration-1000"
+            priority
+         />
+         <div className="absolute inset-0 bg-black/10" />
+         <div className="absolute bottom-10 left-10 text-white">
+            <h2 className="text-4xl font-serif font-black uppercase tracking-tight mb-2">The Collection</h2>
+            <p className="text-xs uppercase tracking-widest opacity-80 font-sans">Premium Essentials / SS24</p>
+         </div>
+      </div>
 
-          {error && (
-            <div className="p-4 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wide border-l-2 border-red-500">
-              {error}
+      {/* Right (Form) */}
+      <div className="flex items-center justify-center bg-white p-8 lg:p-20">
+         <div className="w-full max-w-md space-y-12">
+            
+            {/* Header */}
+            <div className="space-y-4 text-center">
+               <Link href="/" className="inline-block mb-12">
+                 <span className="text-2xl font-black font-serif uppercase tracking-tighter hover:text-gray-600 transition-colors">STORENTIA</span>
+               </Link>
+               <div className="space-y-3">
+                 <h1 className="text-3xl md:text-5xl font-serif font-black uppercase tracking-tight text-black">
+                   {step === 'email' ? 'Welcome Back' : 'Verify Access'}
+                 </h1>
+                 <p className="text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] font-sans">
+                   {step === 'email' ? 'Enter your details to access your account' : 'Enter the code sent to your email'}
+                 </p>
+               </div>
             </div>
-          )}
 
-          {step === 'email' ? (
-            <form onSubmit={handleSendOtp} className="space-y-8">
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-gray-900">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={loading}
-                    className="border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-12 bg-transparent placeholder:text-gray-300"
-                  />
-                </div>
+            {error && (
+              <div className="p-4 bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-wide border-l-2 border-red-500">
+                {error}
               </div>
+            )}
 
-              <div className="space-y-6 pt-4">
-                 <Button 
-                    type="submit" 
-                    disabled={loading}
-                    className="w-full h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all"
-                 >
-                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continue with Email'}
-                 </Button>
-                 
-                 <div className="text-center">
-                    <Link href="/signup" className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
-                      New Member? Create Account
-                    </Link>
-                 </div>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-8">
-               <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="otp" className="text-xs font-bold uppercase tracking-widest text-gray-900">Security Code</Label>
+            {step === 'email' ? (
+              <form onSubmit={handleSendOtp} className="space-y-10">
+                <div className="space-y-6">
+                  <div className="relative group">
                     <Input
-                      id="otp"
-                      type="text"
-                      placeholder="• • • • • •"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
+                      id="email"
+                      type="email"
+                      placeholder="name@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={loading}
-                      maxLength={6}
-                      className="text-center text-2xl tracking-[1em] border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-black transition-colors h-16 bg-transparent"
+                      className="border-0 border-b border-gray-200 rounded-none px-0 py-6 text-lg focus-visible:ring-0 focus-visible:border-black transition-all bg-transparent placeholder:text-gray-300 font-sans"
                     />
+                    <Label htmlFor="email" className="absolute -top-3 left-0 text-[10px] font-bold uppercase tracking-widest text-gray-400 group-focus-within:text-black transition-colors">Email Address</Label>
                   </div>
-               </div>
+                </div>
 
-               <div className="space-y-6 pt-4">
-                 <Button 
-                    type="submit" 
-                    disabled={loading}
-                    className="w-full h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all"
-                 >
-                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify & Login'}
-                 </Button>
-                  
-                 <div className="flex justify-between items-center px-2">
-                    <button type="button" onClick={handleBackToEmail} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
-                       Back
-                    </button>
-                    <button type="button" onClick={handleSendOtp} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
-                       Resend Code
-                    </button>
+                <div className="space-y-6 pt-4">
+                   <Button 
+                      type="submit" 
+                      disabled={loading}
+                      className="w-full h-14 rounded-none bg-black hover:bg-[#1A3C34] text-white text-xs font-bold uppercase tracking-[0.2em] transition-all transform hover:-translate-y-1 duration-300 shadow-lg hover:shadow-xl"
+                   >
+                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continue'}
+                   </Button>
+                   
+                   <div className="text-center">
+                      <Link href="/signup" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors border-b border-transparent hover:border-black pb-0.5">
+                        New Member? Create Account
+                      </Link>
+                   </div>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOtp} className="space-y-10">
+                 <div className="space-y-6">
+                    <div className="relative group">
+                      <Input
+                        id="otp"
+                        type="text"
+                        placeholder="• • • • • •"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        required
+                        disabled={loading}
+                        maxLength={6}
+                        className="text-center text-3xl tracking-[0.5em] border-0 border-b border-gray-200 rounded-none px-0 py-6 focus-visible:ring-0 focus-visible:border-black transition-all h-20 bg-transparent font-serif"
+                      />
+                       <Label htmlFor="otp" className="absolute -top-3 left-0 text-[10px] font-bold uppercase tracking-widest text-gray-400 group-focus-within:text-black transition-colors w-full text-center">Security Code</Label>
+                    </div>
                  </div>
-               </div>
-            </form>
-          )}
-       </div>
+
+                 <div className="space-y-6 pt-4">
+                   <Button 
+                      type="submit" 
+                      disabled={loading}
+                      className="w-full h-14 rounded-none bg-black hover:bg-[#1A3C34] text-white text-xs font-bold uppercase tracking-[0.2em] transition-all transform hover:-translate-y-1 duration-300 shadow-lg hover:shadow-xl"
+                   >
+                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify & Login'}
+                   </Button>
+                    
+                   <div className="flex justify-between items-center px-1">
+                      <button type="button" onClick={handleBackToEmail} className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+                         Back
+                      </button>
+                      <button type="button" onClick={handleSendOtp} className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+                         Resend Code
+                      </button>
+                   </div>
+                 </div>
+              </form>
+            )}
+         </div>
+      </div>
     </div>
   );
 }

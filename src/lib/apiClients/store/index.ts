@@ -54,7 +54,7 @@ export interface StoreProduct {
   id: string;
   title: string;
   description?: string;
-  price: number;
+  price: number | string;
   sku?: string | null;
   stock?: number;
   storeId: string;

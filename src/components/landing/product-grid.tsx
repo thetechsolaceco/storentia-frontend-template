@@ -10,11 +10,15 @@ import {
   CarouselNext,
   CarouselPrevious
 } from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
-import { storeAPI, type StoreProduct } from "@/lib/apiClients";
-import { motion, AnimatePresence } from "framer-motion";
-import { Skeleton } from "@/components/ui/skeleton"; // Keep Skeleton for loading state
+
+import { storeAPI, type StoreProduct, addToCart as addToCartAPI, addToWishlist } from "@/lib/apiClients";
+import { motion } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/shared/product-card";
+import { useAppDispatch } from "@/lib/store/hooks";
+import { addItem } from "@/lib/store/cartSlice";
+import { useCart } from "@/hooks/useCart";
+import { isAuthenticated } from "@/lib/apiClients/store/authentication";
 
 interface ProductGridProps {
   type?: 'trending' | 'latest' | 'recommended';
@@ -34,12 +38,20 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 30 },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as any } },
 };
 
 export function ProductGrid({ type = 'latest', limit = 10 }: ProductGridProps) {
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // New state for wishlist actions
+  const [loadingWishlist, setLoadingWishlist] = useState<string | null>(null);
+  
+  const dispatch = useAppDispatch();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { isAuth, getItemQuantity, updateItemQuantity, addToCart } = useCart(); 
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -59,6 +71,7 @@ export function ProductGrid({ type = 'latest', limit = 10 }: ProductGridProps) {
         }
 
         if (result.success && result.data) {
+           // eslint-disable-next-line @typescript-eslint/no-explicit-any
            const data = Array.isArray(result.data) ? result.data : (result.data as any).products || [];
            setProducts(data);
         }
@@ -72,10 +85,36 @@ export function ProductGrid({ type = 'latest', limit = 10 }: ProductGridProps) {
     fetchProducts();
   }, [type, limit]);
 
+  // Handlers
+  const handleAddToCart = (e: React.MouseEvent, product: StoreProduct) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product);
+  };
+
+  const handleAddToWishlist = async (
+    e: React.MouseEvent,
+    productId: string
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setLoadingWishlist(productId);
+    try {
+      const result = await addToWishlist(productId);
+      if (!result.success) {
+        console.error("Failed to add to wishlist:", result.error);
+      }
+    } catch (error) {
+      console.error("Error adding to wishlist:", error);
+    } finally {
+      setLoadingWishlist(null);
+    }
+  };
+
   if (loading) {
     return (
-      <section >
-        <div >
+      <section>
+        <div>
            <div className="flex flex-col items-center mb-12 text-center">
               <Skeleton className="h-10 w-64 mb-4" />
               <Skeleton className="h-4 w-96" />
@@ -104,7 +143,6 @@ export function ProductGrid({ type = 'latest', limit = 10 }: ProductGridProps) {
   return (
     <section>
       <div>
-
         {/* Carousel */}
         <Carousel
           opts={{
@@ -123,7 +161,20 @@ export function ProductGrid({ type = 'latest', limit = 10 }: ProductGridProps) {
               {products.map((product) => (
                 <CarouselItem key={product.id} className="pl-4 md:basis-1/2 lg:basis-1/4">
                   <motion.div variants={itemVariants} className="h-full">
-                    <ProductCard product={product} />
+                    <ProductCard 
+                      product={product} 
+                      onAddToCart={handleAddToCart}
+                      onUpdateQuantity={(e, product, qty) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Assume updateItemQuantity handles Auth checks etc.
+                        updateItemQuantity(product.id, qty);
+                      }}
+                      onAddToWishlist={handleAddToWishlist}
+                      loading={false}
+                      loadingWishlist={loadingWishlist === product.id}
+                      cartQuantity={getItemQuantity(product.id)}
+                    />
                   </motion.div>
                 </CarouselItem>
               ))}

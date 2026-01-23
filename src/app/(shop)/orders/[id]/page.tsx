@@ -142,7 +142,7 @@ export default function OrderDetailPage() {
           </p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-bold">${order.total.toFixed(2)}</p>
+          <p className="text-2xl font-bold">₹{Number(order.total).toFixed(2)}</p>
           <p className="text-sm text-muted-foreground">{order.paymentMethod || "COD"}</p>
         </div>
       </div>
@@ -168,13 +168,13 @@ export default function OrderDetailPage() {
                   <p className="font-medium">{item.title || `Product ${item.productId.slice(-6)}`}</p>
                   <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                 </div>
-                <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                <p className="font-medium">₹{(Number(item.price) * item.quantity).toFixed(2)}</p>
               </div>
             ))}
             <Separator />
             <div className="flex justify-between font-bold">
               <span>Total</span>
-              <span>${order.total.toFixed(2)}</span>
+              <span>₹{Number(order.total).toFixed(2)}</span>
             </div>
           </div>
         </CardContent>

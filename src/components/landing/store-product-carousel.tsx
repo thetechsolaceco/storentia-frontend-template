@@ -54,7 +54,7 @@ export function StoreProductCarousel({ title, type, limit = 10 }: StoreProductCa
       id: `cart-${product.id}`,
       productId: product.id,
       title: product.title,
-      price: product.price,
+      price: Number(product.price),
       image: product.images[0]?.url || "/placeholder.svg",
       quantity: 1,
     }));
@@ -117,7 +117,7 @@ export function StoreProductCarousel({ title, type, limit = 10 }: StoreProductCa
                       >
                         {product.title}
                       </Link>
-                      <div className="mt-2 font-bold">${product.price.toFixed(2)}</div>
+                      <div className="mt-2 font-bold">₹{Number(product.price).toFixed(2)}</div>
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
                       {cartItem ? (

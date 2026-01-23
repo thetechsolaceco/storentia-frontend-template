@@ -59,7 +59,7 @@ export default function CollectionsPage() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.08,
       },
     },
   };
@@ -75,89 +75,96 @@ export default function CollectionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20">
+      <div className="min-h-screen flex items-center justify-center pt-20 bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-black" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="pt-32 pb-12 bg-gray-50 text-center px-4">
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-4xl md:text-6xl font-black font-serif uppercase tracking-tight mb-4"
-        >
-          Collections
-        </motion.h1>
-         <motion.p
+      <div className="pt-32 pb-16 px-4">
+        <div className="container mx-auto max-w-7xl">
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-gray-500 uppercase tracking-widest font-medium text-sm font-sans"
+            className="border-b-2 border-black pb-8"
           >
-            Explore our curated selection
-          </motion.p>
+            <h1 className="text-5xl md:text-7xl font-black font-serif uppercase tracking-tighter mb-3">
+              Collections
+            </h1>
+            <p className="text-gray-500 uppercase tracking-widest font-bold text-xs">
+              Explore our curated selection
+            </p>
+          </motion.div>
+        </div>
       </div>
 
-      <div className="container px-4 md:px-6 py-20">
+      <div className="container mx-auto max-w-7xl px-4 pb-20">
         <motion.div
-           className="grid grid-cols-1 md:grid-cols-2 gap-12"
-           variants={containerVariants}
-           initial="hidden"
-           animate="visible"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
-           {collections.map((item, index) => (
-             <motion.div
-               key={item.id}
-               variants={itemVariants}
-               className={`group cursor-pointer ${index % 3 === 0 ? 'md:col-span-2' : ''}`}
-             >
-                <Link href={`/products?collection=${item.id}`} className="block relative">
-                   <div className={`relative overflow-hidden bg-gray-100 rounded-3xl ${index % 3 === 0 ? 'aspect-[2.4/1]' : 'aspect-square'}`}>
-                      {item.imageUrl ? (
-                         <Image
-                           src={item.imageUrl}
-                           alt={item.title}
-                           fill
-                           className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                         />
-                      ) : (
-                         <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
-                             <span className="text-gray-400 font-bold uppercase tracking-widest">No Image</span>
-                         </div>
-                      )}
-                      
-                      {/* Overlay */}
-                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
-                      
-                      {/* Content Overlay */}
-                      <div className="absolute inset-0 p-8 md:p-12 flex flex-col justify-end">
-                         <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                            <h2 className="text-3xl md:text-5xl font-black font-serif uppercase text-white tracking-tighter mb-4 drop-shadow-lg">
-                               {item.title}
-                            </h2>
-                            <p className="text-white/90 text-sm md:text-base max-w-lg mb-6 line-clamp-2 drop-shadow-md">
-                               {item.description}
-                            </p>
-                            
-                            <Button className="bg-white text-black hover:bg-[#1A3C34] hover:text-white rounded-full font-bold uppercase tracking-widest px-8 shadow-xl transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0">
-                               View Collection
-                            </Button>
-                         </div>
+          {collections.map((item) => (
+            <motion.div
+              key={item.id}
+              variants={itemVariants}
+              className="group"
+            >
+              <Link href={`/products?collection=${item.id}`}>
+                <div className="border-2 border-gray-200 hover:border-black transition-all duration-300 bg-white overflow-hidden">
+                  {/* Image Section */}
+                  <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                    {item.imageUrl ? (
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.title}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+                        <span className="text-gray-400 font-bold uppercase tracking-widest text-sm">
+                          No Image
+                        </span>
                       </div>
-                   </div>
-                </Link>
-             </motion.div>
-           ))}
+                    )}
+                  </div>
+
+                  {/* Content Section */}
+                  <div className="p-6 space-y-3">
+                    <h2 className="text-2xl font-black font-serif uppercase tracking-tight group-hover:text-gray-600 transition-colors">
+                      {item.title}
+                    </h2>
+                    
+                    {item.description && (
+                      <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                        {item.description}
+                      </p>
+                    )}
+
+                    <div className="pt-2">
+                      <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest group-hover:gap-3 transition-all">
+                        <span>View Collection</span>
+                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
         </motion.div>
-        
+
         {collections.length === 0 && (
-           <div className="text-center py-20">
-              <p className="text-gray-400 font-medium font-sans uppercase tracking-widest">No collections found</p>
-           </div>
+          <div className="text-center py-20 border-2 border-dashed border-gray-200">
+            <p className="text-gray-400 font-medium uppercase tracking-widest text-sm">
+              No collections found
+            </p>
+          </div>
         )}
       </div>
     </div>

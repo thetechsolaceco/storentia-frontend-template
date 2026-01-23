@@ -172,7 +172,7 @@ export default function WishlistPage() {
                   )}
                 </div>
                 <div className="font-bold mb-4">
-                  ${item.product.price.toFixed(2)}
+                  ₹{Number(item.product.price).toFixed(2)}
                 </div>
                 <div className="mt-auto flex gap-2">
                   <Button

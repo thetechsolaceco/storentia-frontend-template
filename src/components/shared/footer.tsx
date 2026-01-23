@@ -58,22 +58,6 @@ export function Footer() {
             <p className="text-sm text-gray-500 font-medium uppercase leading-relaxed max-w-sm">
               Get newsletter update for upcoming products and best offers and discount for all items
             </p>
-            <form onSubmit={handleSubscribe} className="flex gap-4 max-w-md">
-               <Input 
-                 type="email" 
-                 placeholder="YOUR EMAIL" 
-                 value={email}
-                 onChange={(e) => setEmail(e.target.value)}
-                 className="rounded-full h-12 px-6 border-gray-300 text-xs tracking-wider uppercase placeholder:text-gray-400 focus-visible:ring-black"
-                 required
-               />
-               <Button 
-                 type="submit" 
-                 className="rounded-full h-12 px-8 bg-black text-white hover:bg-gray-800 text-xs font-bold tracking-widest uppercase"
-               >
-                 Submit
-               </Button>
-            </form>
           </div>
 
           {/* Right Side: Links Columns */}
@@ -137,7 +121,7 @@ export function Footer() {
       <div className="w-full bg-[#111111] py-6">
         <div className="container">
            <p className="text-xs text-white/80 font-medium tracking-wide uppercase">
-             &copy; 2025 Milan Allrights Reserved.
+             &copy; {new Date().getFullYear()} Storentia all rights reserved.
            </p>
         </div>
       </div>

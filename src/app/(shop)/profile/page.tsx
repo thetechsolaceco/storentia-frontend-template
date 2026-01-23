@@ -23,7 +23,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, MapPin, User, Loader2, Package, ShoppingBag } from "lucide-react";
+import { Plus, Edit, Trash2, MapPin, User, Loader2, Package, ShoppingBag, Upload, Eye } from "lucide-react";
+import { motion } from "framer-motion";
+import Link from 'next/link';
 import {
   getAllAddresses,
   createAddress,
@@ -39,6 +41,16 @@ import {
   type Order,
 } from "@/lib/apiClients";
 
+const ORDER_STATUS_STEPS = [
+  { key: 'PENDING', label: 'Pending' },
+  { key: 'CONFIRMED', label: 'Confirmed' },
+  { key: 'PROCESSING', label: 'Processing' },
+  { key: 'SHIPPED', label: 'Shipped' },
+  { key: 'DELIVERED', label: 'Delivered' },
+];
+
+const CANCELLED_STATUSES = ['CANCELLED', 'REFUNDED'];
+
 export default function ProfilePage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -51,8 +63,11 @@ export default function ProfilePage() {
   const [userLoading, setUserLoading] = useState(true);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: '', avatar: '' });
+  const [profileForm, setProfileForm] = useState({ name: '' });
   const [addressSaving, setAddressSaving] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>('');
 
   // Form state for new/edit address
   const [formData, setFormData] = useState<CreateAddressRequest>({
@@ -74,6 +89,18 @@ export default function ProfilePage() {
     loadOrders();
   }, []);
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const loadOrders = async () => {
     setOrdersLoading(true);
     try {
@@ -93,13 +120,12 @@ export default function ProfilePage() {
     try {
       const result = await getUserProfile();
       if (result.success && result.data) {
-        // Handle both { user: ... } and direct user object response formats
         const userData = 'user' in result.data ? result.data.user : result.data;
         setUser(userData as UserProfile);
         setProfileForm({
           name: userData.name || '',
-          avatar: userData.avatar || '',
         });
+        setAvatarPreview(userData.avatar || '');
       }
     } catch (error) {
       console.error('Failed to load user profile:', error);
@@ -111,16 +137,20 @@ export default function ProfilePage() {
   const handleUpdateProfile = async () => {
     setProfileSaving(true);
     try {
+      // In a real implementation, you'd upload the file to a storage service first
+      // and get back a URL, then pass that URL to updateUserProfile
+      const avatarUrl = avatarPreview; // Replace with actual upload logic
+      
       const result = await updateUserProfile({
         name: profileForm.name,
-        avatar: profileForm.avatar || undefined,
+        avatar: avatarUrl || undefined,
       });
       
       if (result.success) {
-        // Reload user data
         await loadUser();
         setIsEditProfileOpen(false);
         setError('');
+        setAvatarFile(null);
       } else {
         setError(result.error || 'Failed to update profile');
       }
@@ -251,536 +281,518 @@ export default function ProfilePage() {
     });
   };
 
-  return (
-    <div className="container py-10">
-      <h1 className="text-3xl font-bold mb-8">My Account</h1>
+  const getOrderStatusIndex = (status: string) => {
+    if (CANCELLED_STATUSES.includes(status)) return -1;
+    return ORDER_STATUS_STEPS.findIndex(step => step.key === status);
+  };
 
-      <Tabs defaultValue="details" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="details">User Details</TabsTrigger>
-          <TabsTrigger value="orders">My Orders</TabsTrigger>
-          <TabsTrigger value="addresses">Saved Addresses</TabsTrigger>
-        </TabsList>
+  const OrderStatusBar = ({ status }: { status: string }) => {
+    const isCancelled = CANCELLED_STATUSES.includes(status);
+    const currentIndex = getOrderStatusIndex(status);
 
-        <TabsContent value="details">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>
-                Your personal details and account information.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {userLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    if (isCancelled) {
+      return (
+        <div className="py-6">
+          <div className="flex items-center justify-center">
+            <div className="px-4 py-2 bg-red-50 border-2 border-red-500 rounded-none">
+              <span className="text-xs font-bold uppercase tracking-widest text-red-700">
+                {status}
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="py-8">
+        <div className="relative">
+          {/* Progress Line */}
+          <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200">
+            <div 
+              className="h-full bg-black transition-all duration-500"
+              style={{ width: `${(currentIndex / (ORDER_STATUS_STEPS.length - 1)) * 100}%` }}
+            />
+          </div>
+
+          {/* Steps */}
+          <div className="relative flex justify-between">
+            {ORDER_STATUS_STEPS.map((step, index) => {
+              const isCompleted = index <= currentIndex;
+              const isCurrent = index === currentIndex;
+
+              return (
+                <div key={step.key} className="flex flex-col items-center">
+                  <div
+                    className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                      isCompleted
+                        ? 'bg-black border-black'
+                        : 'bg-white border-gray-300'
+                    }`}
+                  >
+                    {isCompleted && (
+                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  <span
+                    className={`mt-3 text-[10px] font-bold uppercase tracking-widest text-center ${
+                      isCompleted ? 'text-black' : 'text-gray-400'
+                    }`}
+                  >
+                    {step.label}
+                  </span>
                 </div>
-              ) : user ? (
-                <div className="space-y-6">
-                  {/* Show prompt to set name if null */}
-                  {!user.name && (
-                    <div className="p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-lg">
-                      <p className="text-amber-800 dark:text-amber-200 text-sm mb-3">
-                        Welcome! Please set your name to complete your profile.
-                      </p>
-                      <Button size="sm" onClick={() => setIsEditProfileOpen(true)}>
-                        Set Your Name
-                      </Button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-white pt-32 pb-20">
+      <div className="container px-4 md:px-8 max-w-6xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-12"
+        >
+          <h1 className="text-5xl md:text-7xl font-black font-serif uppercase tracking-tighter leading-none mb-2">My Account</h1>
+          {user && (
+            <p className="text-sm md:text-base font-medium tracking-widest text-gray-400 uppercase">
+              Welcome back, {user.name || 'Member'}
+            </p>
+          )}
+        </motion.div>
+
+        <Tabs defaultValue="details" className="space-y-8">
+          <TabsList className="inline-flex gap-8 bg-transparent p-0 w-full justify-start">
+            <TabsTrigger 
+              value="details" 
+              className="data-[state=active]:bg-transparent data-[state=active]:text-black text-gray-400 text-lg md:text-xl font-bold uppercase tracking-wider hover:text-gray-600 transition-colors px-0 pb-4 font-serif data-[state=active]:border-b-2 data-[state=active]:border-black rounded-none"
+            >
+              Profile
+            </TabsTrigger>
+            <TabsTrigger 
+              value="orders" 
+              className="data-[state=active]:bg-transparent data-[state=active]:text-black text-gray-400 text-lg md:text-xl font-bold uppercase tracking-wider hover:text-gray-600 transition-colors px-0 pb-4 font-serif data-[state=active]:border-b-2 data-[state=active]:border-black rounded-none"
+            >
+              Orders
+            </TabsTrigger>
+            <TabsTrigger 
+              value="addresses" 
+              className="data-[state=active]:bg-transparent data-[state=active]:text-black text-gray-400 text-lg md:text-xl font-bold uppercase tracking-wider hover:text-gray-600 transition-colors px-0 pb-4 font-serif data-[state=active]:border-b-2 data-[state=active]:border-black rounded-none"
+            >
+              Addresses
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="pt-4">
+            <TabsContent value="details" className="mt-0">
+              <div className="max-w-4xl">
+                <div className="flex flex-col md:flex-row gap-8 items-start p-8 bg-gray-50">
+                  <div className="relative h-32 w-32 shrink-0 bg-white overflow-hidden rounded-full border-4 border-white shadow-lg">
+                    {user?.avatar ? (
+                      <Image src={user.avatar} alt="Profile" fill className="object-cover" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-black text-white">
+                        <span className="text-4xl font-black font-serif uppercase">{user?.name?.charAt(0) || 'M'}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <h3 className="text-3xl font-black font-serif uppercase tracking-tight mb-1">{user?.name || 'Guest Member'}</h3>
+                      <p className="text-gray-500 tracking-wide text-sm">{user?.email}</p>
+                    </div>
+                    <Button 
+                      onClick={() => setIsEditProfileOpen(true)} 
+                      variant="outline" 
+                      className="rounded-none border-2 border-black hover:bg-black hover:text-white uppercase tracking-widest text-xs font-bold h-11 px-8 transition-all"
+                    >
+                      Edit Profile
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 p-8 border border-gray-200">
+                  <div>
+                    <label className="text-xs uppercase tracking-widest text-gray-400 font-bold block mb-2">Full Name</label>
+                    <p className="text-lg font-medium text-gray-900">{user?.name || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-widest text-gray-400 font-bold block mb-2">Email Address</label>
+                    <p className="text-lg font-medium text-gray-900">{user?.email}</p>
+                  </div>
+                  {user?.role && (
+                    <div>
+                      <label className="text-xs uppercase tracking-widest text-gray-400 font-bold block mb-2">Membership Status</label>
+                      <p className="text-lg font-medium uppercase text-gray-900">{user.role}</p>
                     </div>
                   )}
-
-                  <div className="flex items-start gap-6">
-                    <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
-                      {user.avatar ? (
-                        <Image
-                          src={user.avatar}
-                          alt={user.name || 'User'}
-                          fill
-                          sizes="96px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center">
-                          <User className="h-12 w-12 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <h3 className="text-xl font-semibold">
-                        {user.name || <span className="text-muted-foreground italic">Name not set</span>}
-                      </h3>
-                      <p className="text-muted-foreground">{user.email}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        {user.status && (
-                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
-                            {user.status}
-                          </span>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          Member since {new Date(user.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-muted-foreground">Full Name</Label>
-                      <p className="font-medium">
-                        {user.name || <span className="text-muted-foreground italic">Not set</span>}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">Email</Label>
-                      <p className="font-medium">{user.email}</p>
-                    </div>
-                    {user.role && (
-                      <div>
-                        <Label className="text-muted-foreground">Account Role</Label>
-                        <p className="font-medium">{user.role}</p>
-                      </div>
-                    )}
-                    {user.lastLogin && (
-                      <div>
-                        <Label className="text-muted-foreground">Last Login</Label>
-                        <p className="font-medium">
-                          {new Date(user.lastLogin).toLocaleString()}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Edit className="h-4 w-4 mr-2" />
-                        {user.name ? 'Edit Profile' : 'Set Up Profile'}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Edit Profile</DialogTitle>
-                        <DialogDescription>
-                          Update your profile information.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="profileName">Name</Label>
-                          <Input
-                            id="profileName"
-                            value={profileForm.name}
-                            onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                            placeholder="Your name"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="profileAvatar">Avatar URL</Label>
-                          <Input
-                            id="profileAvatar"
-                            value={profileForm.avatar}
-                            onChange={(e) => setProfileForm({ ...profileForm, avatar: e.target.value })}
-                            placeholder="https://example.com/avatar.jpg"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Enter a URL to an image for your profile picture.
-                          </p>
-                        </div>
-                        {profileForm.avatar && (
-                          <div className="flex justify-center">
-                            <div className="relative h-20 w-20 rounded-full overflow-hidden bg-muted">
-                              <Image
-                                src={profileForm.avatar}
-                                alt="Preview"
-                                fill
-                                sizes="80px"
-                                className="object-cover"
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditProfileOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button onClick={handleUpdateProfile} disabled={profileSaving}>
-                          {profileSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                          Save Changes
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
                 </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Unable to load profile. Please try again later.</p>
-                  <Button variant="outline" className="mt-4" onClick={loadUser}>
-                    Retry
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </div>
+            </TabsContent>
 
-        <TabsContent value="orders">
-          <Card>
-            <CardHeader>
-              <CardTitle>Order History</CardTitle>
-              <CardDescription>View your past orders.</CardDescription>
-            </CardHeader>
-            <CardContent>
+            <TabsContent value="orders" className="mt-0">
               {ordersLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <div className="py-20 flex justify-center">
+                  <Loader2 className="animate-spin text-gray-300 h-8 w-8" />
                 </div>
               ) : orders.length === 0 ? (
-                <div className="text-center py-8">
-                  <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground mb-4">No orders yet</p>
-                  <Button variant="outline" asChild>
-                    <a href="/products">Start Shopping</a>
+                <div className="py-20 text-center border-2 border-dashed border-gray-200">
+                  <Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg font-serif italic text-gray-400 mb-6">You haven't placed any orders yet.</p>
+                  <Button asChild className="rounded-none bg-black text-white hover:bg-gray-800 uppercase tracking-widest text-xs font-bold px-8 h-12">
+                    <Link href="/products">Start Shopping</Link>
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-6">
                   {orders.map((order) => (
-                    <div key={order.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold flex items-center gap-2">
-                          <Package className="h-4 w-4" />
-                          Order #{order.id.slice(-8).toUpperCase()}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {new Date(order.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">
-                          Status:{" "}
-                          <span className={`font-medium ${
-                            order.status === 'DELIVERED' ? 'text-green-600' :
-                            order.status === 'PENDING' ? 'text-yellow-600' :
-                            order.status === 'PROCESSING' ? 'text-blue-600' :
-                            order.status === 'CANCELLED' ? 'text-red-600' :
-                            'text-muted-foreground'
-                          }`}>
-                            {order.status}
-                          </span>
-                        </span>
-                        <span className="font-bold">${order.total.toFixed(2)}</span>
-                      </div>
-                      {order.items && order.items.length > 0 && (
-                        <>
-                          <Separator className="my-3" />
-                          <div className="text-sm text-muted-foreground">
-                            {order.items.length} item{order.items.length > 1 ? 's' : ''}
+                    <div key={order.id} className="border-2 border-gray-200 hover:border-black transition-all duration-300 bg-white">
+                      <div className="p-6">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <span className="text-sm font-bold uppercase tracking-widest">Order #{order.orderNumber}</span>
+                              <span className={`px-3 py-1 text-xs font-bold uppercase tracking-widest ${
+                                order.status === 'DELIVERED' ? 'bg-green-100 text-green-700' : 
+                                CANCELLED_STATUSES.includes(order.status) ? 'bg-red-100 text-red-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {order.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-400 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                           </div>
-                        </>
-                      )}
+                          <div className="flex items-center gap-4">
+                            <span className="text-2xl font-serif font-bold">₹{Number(order.total).toFixed(2)}</span>
+                            <Button 
+                              onClick={() => setSelectedOrder(order)}
+                              variant="outline"
+                              className="rounded-none border-2 border-black hover:bg-black hover:text-white uppercase tracking-widest text-xs font-bold h-10 px-6"
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Details
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="pt-4 border-t border-gray-100 space-y-2">
+                          {order.items?.slice(0, 2).map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-center text-sm">
+                              <span className="text-gray-600 font-medium">{item.quantity}x {item.title || 'Product'}</span>
+                              <span className="text-gray-900 font-semibold">₹{Number(item.price).toFixed(2)}</span>
+                            </div>
+                          ))}
+                          {order.items && order.items.length > 2 && (
+                            <p className="text-xs text-gray-400 italic">+{order.items.length - 2} more items</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </TabsContent>
 
-        <TabsContent value="addresses">
-          <Card>
-            <CardHeader>
-              <CardTitle>Saved Addresses</CardTitle>
-              <CardDescription>Manage your shipping addresses.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {error && (
-                <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-                  {error}
+            <TabsContent value="addresses" className="mt-0">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-2xl font-serif font-bold">Saved Addresses</h3>
+                  <Button 
+                    onClick={() => setIsAddDialogOpen(true)} 
+                    className="rounded-none bg-black hover:bg-gray-800 text-white uppercase tracking-widest text-xs font-bold h-11 px-6"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add New Address
+                  </Button>
                 </div>
-              )}
-              
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Array.isArray(addresses) && addresses.length > 0 ? addresses.map((addr) => (
-                    <div key={addr.id} className="border rounded-lg p-4 relative">
-                      {addr.address.isDefault && (
-                        <div className="absolute top-2 right-2 text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-                          Default
+
+                {addresses.length === 0 && !loading ? (
+                  <div className="py-20 text-center border-2 border-dashed border-gray-200">
+                    <MapPin className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-gray-400 italic font-serif">No addresses saved yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {addresses.map((addr) => (
+                      <div key={addr.id} className="relative p-6 border-2 border-gray-200 hover:border-black transition-all group bg-white">
+                        {addr.address.isDefault && (
+                          <span className="absolute top-0 right-0 text-xs uppercase tracking-widest font-bold bg-black text-white px-3 py-1">Default</span>
+                        )}
+                        <h4 className="font-bold uppercase tracking-wide text-sm mb-3">{addr.address.firstName} {addr.address.lastName}</h4>
+                        <div className="space-y-1 text-sm text-gray-600 mb-4">
+                          <p>{addr.address.addressLine1}</p>
+                          {addr.address.addressLine2 && <p>{addr.address.addressLine2}</p>}
+                          <p>{addr.address.city}, {addr.address.state} {addr.address.postalCode}</p>
+                          <p>{addr.address.country}</p>
+                          <p className="pt-2 text-xs uppercase tracking-widest font-semibold text-gray-900">{addr.address.phone}</p>
                         </div>
-                      )}
-                      <div className="flex items-start gap-2 mb-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
-                        <h3 className="font-semibold">
-                          {addr.address.firstName} {addr.address.lastName}
-                        </h3>
+                        <div className="flex gap-4 pt-4 border-t border-gray-100">
+                          <button onClick={() => openEditDialog(addr)} className="text-xs font-bold uppercase tracking-widest hover:underline">Edit</button>
+                          <button onClick={() => handleDeleteAddress(addr.id)} className="text-xs font-bold uppercase tracking-widest hover:underline text-red-600">Delete</button>
+                          {!addr.address.isDefault && (
+                            <button onClick={() => handleSetDefault(addr.id)} className="text-xs font-bold uppercase tracking-widest hover:underline text-gray-500 hover:text-black">Set Default</button>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground ml-6">
-                        {addr.address.addressLine1}
-                        {addr.address.addressLine2 && (
-                          <>
-                            <br />
-                            {addr.address.addressLine2}
-                          </>
-                        )}
-                        <br />
-                        {addr.address.city}, {addr.address.state} {addr.address.postalCode}
-                        <br />
-                        {addr.address.country}
-                        <br />
-                        {addr.address.phone}
-                      </p>
-                      <div className="mt-4 flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(addr)}
-                        >
-                          <Edit className="h-3 w-3 mr-1" />
-                          Edit
-                        </Button>
-                        {!addr.address.isDefault && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleSetDefault(addr.id)}
-                          >
-                            Set Default
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() => handleDeleteAddress(addr.id)}
-                        >
-                          <Trash2 className="h-3 w-3 mr-1" />
-                          Delete
-                        </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
+
+      {/* Order Details Dialog */}
+      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+        <DialogContent className="sm:max-w-2xl p-0 border-0 shadow-2xl rounded-none bg-white max-h-[90vh] overflow-y-auto">
+          {selectedOrder && (
+            <>
+              <DialogHeader className="p-8 pb-0">
+                <DialogTitle className="text-3xl font-black font-serif uppercase tracking-tight mb-2">Order Details</DialogTitle>
+                <p className="text-sm text-gray-500 uppercase tracking-widest">Order #{selectedOrder.orderNumber}</p>
+              </DialogHeader>
+              
+              <div className="px-8">
+                <OrderStatusBar status={selectedOrder.status} />
+              </div>
+
+              <div className="px-8 py-6 bg-gray-50 space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-xs uppercase tracking-widest text-gray-400 font-bold block mb-1">Order Date</span>
+                    <span className="font-medium">{new Date(selectedOrder.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs uppercase tracking-widest text-gray-400 font-bold block mb-1">Payment Method</span>
+                    <span className="font-medium uppercase">{selectedOrder.paymentMethod}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs uppercase tracking-widest text-gray-400 font-bold block mb-1">Payment Status</span>
+                    <span className={`font-medium uppercase ${selectedOrder.paymentStatus === 'PAID' ? 'text-green-600' : 'text-gray-600'}`}>
+                      {selectedOrder.paymentStatus}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs uppercase tracking-widest text-gray-400 font-bold block mb-1">Store</span>
+                    <span className="font-medium">{selectedOrder.storeName}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-8 pt-6">
+                <h4 className="text-sm font-bold uppercase tracking-widest mb-4 text-gray-700">Order Items</h4>
+                <div className="space-y-3">
+                  {selectedOrder.items?.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-start p-4 bg-gray-50 border border-gray-200">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm mb-1">{item.title || 'Product'}</p>
+                        <p className="text-xs text-gray-500 uppercase tracking-widest">Quantity: {item.quantity}</p>
                       </div>
+                      <span className="text-lg font-serif font-bold">₹{Number(item.price).toFixed(2)}</span>
                     </div>
-                  )) : (
-                    <div className="col-span-full text-center py-8 text-muted-foreground">
-                      No addresses found. Add your first address below.
+                  ))}
+                </div>
+
+                <div className="mt-6 pt-6 border-t-2 border-gray-200 flex justify-between items-center">
+                  <span className="text-lg font-bold uppercase tracking-wide">Total</span>
+                  <span className="text-3xl font-serif font-black">₹{Number(selectedOrder.total).toFixed(2)}</span>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
+        <DialogContent className="sm:max-w-md p-8 border-0 shadow-2xl rounded-none bg-white">
+          <DialogHeader className="mb-6">
+            <DialogTitle className="text-2xl font-black font-serif uppercase tracking-tight">Edit Profile</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <Label className="text-xs uppercase tracking-widest text-gray-500 font-bold">Profile Picture</Label>
+              <div className="flex items-center gap-6">
+                <div className="relative h-24 w-24 shrink-0 bg-gray-100 overflow-hidden rounded-full border-2 border-gray-200">
+                  {avatarPreview ? (
+                    <Image src={avatarPreview} alt="Preview" fill className="object-cover" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center bg-black text-white">
+                      <span className="text-3xl font-black font-serif uppercase">{profileForm.name?.charAt(0) || 'M'}</span>
                     </div>
                   )}
-                  
-                  <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <DialogTrigger asChild>
-                      <div className="border border-dashed rounded-lg p-4 flex items-center justify-center min-h-[150px] cursor-pointer hover:bg-muted/50">
-                        <Button variant="ghost">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add New Address
-                        </Button>
-                      </div>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px]">
-                      <DialogHeader>
-                        <DialogTitle>Add New Address</DialogTitle>
-                        <DialogDescription>
-                          Add a new shipping address to your account.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="firstName">First Name</Label>
-                            <Input
-                              id="firstName"
-                              value={formData.firstName}
-                              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="lastName">Last Name</Label>
-                            <Input
-                              id="lastName"
-                              value={formData.lastName}
-                              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="addressLine1">Address Line 1</Label>
-                          <Input
-                            id="addressLine1"
-                            value={formData.addressLine1}
-                            onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="addressLine2">Address Line 2 (Optional)</Label>
-                          <Input
-                            id="addressLine2"
-                            value={formData.addressLine2}
-                            onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="city">City</Label>
-                            <Input
-                              id="city"
-                              value={formData.city}
-                              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="state">State</Label>
-                            <Input
-                              id="state"
-                              value={formData.state}
-                              onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="postalCode">Postal Code</Label>
-                            <Input
-                              id="postalCode"
-                              value={formData.postalCode}
-                              onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="country">Country</Label>
-                            <Input
-                              id="country"
-                              value={formData.country}
-                              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="phone">Phone</Label>
-                          <Input
-                            id="phone"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={addressSaving}>
-                          Cancel
-                        </Button>
-                        <Button onClick={handleCreateAddress} disabled={addressSaving}>
-                          {addressSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                          Add Address
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Edit Address Dialog */}
-      <Dialog open={!!editingAddress} onOpenChange={() => setEditingAddress(null)}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Edit Address</DialogTitle>
-            <DialogDescription>
-              Update your shipping address details.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="editFirstName">First Name</Label>
-                <Input
-                  id="editFirstName"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="editLastName">Last Name</Label>
-                <Input
-                  id="editLastName"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                />
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                    id="avatar-upload"
+                  />
+                  <Label
+                    htmlFor="avatar-upload"
+                    className="inline-flex items-center justify-center h-11 px-6 rounded-none border-2 border-black hover:bg-black hover:text-white uppercase tracking-widest text-xs font-bold cursor-pointer transition-all"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Photo
+                  </Label>
+                  <p className="text-xs text-gray-400 mt-2">JPG, PNG or GIF (max. 5MB)</p>
+                </div>
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="editAddressLine1">Address Line 1</Label>
+              <Label htmlFor="profileName" className="text-xs uppercase tracking-widest text-gray-500 font-bold">Full Name</Label>
               <Input
-                id="editAddressLine1"
-                value={formData.addressLine1}
-                onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="editAddressLine2">Address Line 2 (Optional)</Label>
-              <Input
-                id="editAddressLine2"
-                value={formData.addressLine2}
-                onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="editCity">City</Label>
-                <Input
-                  id="editCity"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="editState">State</Label>
-                <Input
-                  id="editState"
-                  value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="editPostalCode">Postal Code</Label>
-                <Input
-                  id="editPostalCode"
-                  value={formData.postalCode}
-                  onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="editCountry">Country</Label>
-                <Input
-                  id="editCountry"
-                  value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="editPhone">Phone</Label>
-              <Input
-                id="editPhone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                id="profileName"
+                value={profileForm.name}
+                onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                className="border-2 border-gray-200 focus:border-black rounded-none h-12"
+                placeholder="Enter your name"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingAddress(null)}>
-              Cancel
+          <DialogFooter className="mt-8">
+            <Button 
+              onClick={handleUpdateProfile} 
+              disabled={profileSaving} 
+              className="w-full h-12 rounded-none bg-black hover:bg-gray-800 text-white uppercase tracking-widest text-xs font-bold"
+            >
+              {profileSaving ? (
+                <>
+                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </Button>
-            <Button onClick={handleUpdateAddress}>
-              Update Address
-            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+        
+      {/* Address Dialog (Shared for Add/Edit) */}
+      <Dialog open={isAddDialogOpen || !!editingAddress} onOpenChange={(open) => { if(!open) { setIsAddDialogOpen(false); setEditingAddress(null); resetForm(); } }}>
+        <DialogContent className="sm:max-w-xl p-8 border-0 shadow-2xl rounded-none bg-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="mb-6">
+            <DialogTitle className="text-3xl font-black font-serif uppercase tracking-tight">
+              {editingAddress ? 'Edit Address' : 'New Address'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-widest text-gray-500 font-bold">First Name</Label>
+                <Input 
+                  value={formData.firstName} 
+                  onChange={(e) => setFormData({...formData, firstName: e.target.value})} 
+                  className="rounded-none border-2 border-gray-200 h-11 focus:border-black" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-widest text-gray-500 font-bold">Last Name</Label>
+                <Input 
+                  value={formData.lastName} 
+                  onChange={(e) => setFormData({...formData, lastName: e.target.value})} 
+                  className="rounded-none border-2 border-gray-200 h-11 focus:border-black" 
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-widest text-gray-500 font-bold">Address Line 1</Label>
+              <Input 
+                value={formData.addressLine1} 
+                onChange={(e) => setFormData({...formData, addressLine1: e.target.value})} 
+                className="rounded-none border-2 border-gray-200 h-11 focus:border-black" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-widest text-gray-500 font-bold">Address Line 2 (Optional)</Label>
+              <Input 
+                value={formData.addressLine2} 
+                onChange={(e) => setFormData({...formData, addressLine2: e.target.value})} 
+                className="rounded-none border-2 border-gray-200 h-11 focus:border-black" 
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-widest text-gray-500 font-bold">City</Label>
+                <Input 
+                  value={formData.city} 
+                  onChange={(e) => setFormData({...formData, city: e.target.value})} 
+                  className="rounded-none border-2 border-gray-200 h-11 focus:border-black" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-widest text-gray-500 font-bold">State</Label>
+                <Input 
+                  value={formData.state} 
+                  onChange={(e) => setFormData({...formData, state: e.target.value})} 
+                  className="rounded-none border-2 border-gray-200 h-11 focus:border-black" 
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-widest text-gray-500 font-bold">Postal Code</Label>
+                <Input 
+                  value={formData.postalCode} 
+                  onChange={(e) => setFormData({...formData, postalCode: e.target.value})} 
+                  className="rounded-none border-2 border-gray-200 h-11 focus:border-black" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-widest text-gray-500 font-bold">Country</Label>
+                <Input 
+                  value={formData.country} 
+                  onChange={(e) => setFormData({...formData, country: e.target.value})} 
+                  className="rounded-none border-2 border-gray-200 h-11 focus:border-black" 
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-widest text-gray-500 font-bold">Phone</Label>
+              <Input 
+                value={formData.phone} 
+                onChange={(e) => setFormData({...formData, phone: e.target.value})} 
+                className="rounded-none border-2 border-gray-200 h-11 focus:border-black" 
+              />
+            </div>
+          </div>
+          
+          <DialogFooter className="mt-8 pt-6 border-t-2 border-gray-100">
+            <div className="flex gap-4 w-full">
+              <Button 
+                variant="outline" 
+                onClick={() => { setIsAddDialogOpen(false); setEditingAddress(null); resetForm(); }} 
+                className="flex-1 rounded-none border-2 border-gray-300 hover:border-black uppercase tracking-widest text-xs font-bold h-12"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={editingAddress ? handleUpdateAddress : handleCreateAddress} 
+                disabled={addressSaving} 
+                className="flex-1 rounded-none bg-black hover:bg-gray-800 text-white uppercase tracking-widest text-xs font-bold h-12"
+              >
+                {addressSaving ? (
+                  <>
+                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  editingAddress ? 'Update Address' : 'Save Address'
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -3,7 +3,7 @@ import { getStoreData } from "../auth";
 
 export interface CartItem {
   id: string;
-  productId: string;
+  productId?: string; // Made optional as per API response observation
   quantity: number;
   product?: {
     id: string;

@@ -5,7 +5,7 @@ export interface OrderItem {
   productId: string;
   title?: string;
   quantity: number;
-  price: number;
+  price: number | string;
 }
 
 export interface ShippingAddress {
@@ -43,7 +43,7 @@ export interface Order {
   storeId?: string;
   storeName?: string;
   items: OrderItem[];
-  total: number;
+  total: number | string;
   status: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
   paymentMethod?: string;
   paymentStatus?: string;

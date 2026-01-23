@@ -163,24 +163,24 @@ export default function ProductPage() {
 
   return (
     <div className="bg-white min-h-screen pt-20 pb-20">
-      <div className="container px-4 md:px-6">
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
+      <div className="container px-4 md:px-8">
+        <div className="flex flex-col lg:flex-row gap-16 lg:gap-32">
           
           {/* Left Column - Sticky Images */}
           <div className="lg:w-1/2">
-            <div className="lg:sticky lg:top-28 space-y-6">
+            <div className="lg:sticky lg:top-32 space-y-8">
                {/* Nav Back (Mobile only) */}
                <div className="lg:hidden mb-4">
-                  <Link href="/products" className="inline-flex items-center text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-black transition-colors">
+                  <Link href="/products" className="inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-black transition-colors">
                     <ArrowLeft className="mr-2 h-3 w-3" /> Back
                   </Link>
                </div>
 
               <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="relative aspect-[3/4] w-full bg-gray-50 rounded-lg overflow-hidden"
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="relative aspect-3/4 w-full bg-gray-100/50 overflow-hidden"
               >
                 <Image
                   src={mainImage}
@@ -191,7 +191,7 @@ export default function ProductPage() {
                   className="object-cover"
                 />
                 {product.status === "ACTIVE" && (
-                   <div className="absolute top-4 left-4 bg-black text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 backdrop-blur-md">
+                   <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-md text-black text-[10px] font-bold uppercase tracking-widest px-4 py-2">
                       In Stock
                    </div>
                 )}
@@ -204,8 +204,8 @@ export default function ProductPage() {
                     <button
                       key={img.id}
                       onClick={() => setSelectedImage(index)}
-                      className={`relative w-24 h-32 flex-shrink-0 bg-gray-50 overflow-hidden transition-all duration-300 ${
-                        selectedImage === index ? "ring-1 ring-black opacity-100" : "opacity-60 hover:opacity-100"
+                      className={`relative w-24 h-32 shrink-0 bg-gray-50 overflow-hidden transition-all duration-300 ${
+                        selectedImage === index ? "ring-1 ring-black opacity-100 grayscale-0" : "opacity-50 hover:opacity-100 grayscale"
                       }`}
                     >
                       <Image src={img.url} alt="" fill sizes="96px" className="object-cover" />
@@ -217,82 +217,86 @@ export default function ProductPage() {
           </div>
 
           {/* Right Column - Product Details */}
-          <div className="lg:w-1/2 flex flex-col pt-4">
+          <div className="lg:w-1/2 flex flex-col pt-4 lg:pt-0">
              {/* Nav Back (Desktop) */}
-             <div className="hidden lg:block mb-8">
-                <Link href="/products" className="inline-flex items-center text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
-                  <ArrowLeft className="mr-2 h-3 w-3" /> Back to Products
+             <div className="hidden lg:block mb-12">
+                <Link href="/products" className="inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors group">
+                  <ArrowLeft className="mr-2 h-3 w-3 transition-transform group-hover:-translate-x-1" /> Back to Collection
                 </Link>
              </div>
 
              <motion.div
-               initial={{ opacity: 0, y: 20 }}
+               initial={{ opacity: 0, y: 30 }}
                animate={{ opacity: 1, y: 0 }}
-               transition={{ duration: 0.6, delay: 0.2 }}
-               className="space-y-8"
+               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+               className="space-y-12"
              >
                 {/* Header */}
-                <div className="space-y-4 border-b border-gray-100 pb-8">
-                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-black leading-[0.9]">
-                     {product.title}
-                   </h1>
-                   <div className="flex items-center justify-between">
-                      <p className="text-2xl md:text-3xl font-medium text-black">
-                        ${Number(product.price).toFixed(2)}
+                <div className="space-y-6 border-b border-gray-100 pb-10">
+                   <div className="space-y-2">
+                      <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400">Essential</h2>
+                      <h1 className="text-5xl md:text-7xl font-black font-serif uppercase tracking-tighter text-black leading-[0.9]">
+                        {product.title}
+                      </h1>
+                   </div>
+                   <div className="flex items-center justify-between pt-2">
+                      <p className="text-3xl font-light text-black font-serif">
+                        ₹{Number(product.price).toFixed(2)}
                       </p>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 opacity-50">
                           {[...Array(5)].map((_, i) => (
-                            <Star key={i} className="h-4 w-4 fill-black text-black" />
+                            <Star key={i} className="h-3 w-3 fill-black text-black" />
                           ))}
-                          <span className="text-xs font-bold ml-2 text-gray-400 uppercase tracking-wider">No Reviews</span>
                       </div>
                    </div>
                 </div>
 
-                {/* Description - Short */}
+                {/* Description */}
                 {product.description && (
-                  <div className="prose prose-sm max-w-none text-gray-600 leading-relaxed">
+                  <div className="prose prose-sm max-w-none text-gray-600 font-sans leading-relaxed tracking-wide">
                     <p>{product.description}</p>
                   </div>
                 )}
 
                 {/* Actions */}
-                <div className="pt-4 space-y-6">
+                <div className="pt-4 space-y-8">
                    {/* Quantity */}
-                   <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase tracking-widest text-black">Quantity</span>
-                      <div className="flex items-center border border-gray-200 rounded-full p-1">
-                        <button 
-                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          disabled={quantity <= 1}
-                          className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors disabled:opacity-30"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="w-12 text-center font-bold text-sm">{quantity}</span>
-                         <button 
-                          onClick={() => setQuantity(quantity + 1)}
-                          className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
+                   <div className="space-y-4">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Quantity</span>
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center border-b border-gray-200 pb-2">
+                          <button 
+                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                            disabled={quantity <= 1}
+                            className="w-8 h-8 flex items-center justify-center hover:text-gray-500 transition-colors disabled:opacity-30"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span className="w-12 text-center font-bold text-lg font-serif">{quantity}</span>
+                           <button 
+                            onClick={() => setQuantity(quantity + 1)}
+                            className="w-8 h-8 flex items-center justify-center hover:text-gray-500 transition-colors"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
                       </div>
                    </div>
 
                    {/* Add to Cart / Wishlist */}
-                   <div className="flex gap-4">
+                   <div className="flex gap-4 pt-4">
                       {productInCart ? (
-                         <div className="flex-1 flex items-center justify-between bg-black text-white px-6 py-4 rounded-full">
+                         <div className="flex-1 flex items-center justify-between bg-black text-white px-8 py-5">
                             <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                              <Check className="h-4 w-4" /> In Cart
+                              <Check className="h-4 w-4" /> Added
                             </span>
-                             <div className="flex items-center gap-3">
-                                <button onClick={() => handleUpdateCartQuantity(cartQuantity - 1)} className="hover:text-gray-300">
-                                   <Minus className="h-4 w-4" />
+                             <div className="flex items-center gap-4">
+                                <button onClick={() => handleUpdateCartQuantity(cartQuantity - 1)} className="hover:text-gray-300 transition-colors">
+                                   <Minus className="h-3 w-3" />
                                 </button>
-                                <span className="text-sm font-bold">{cartQuantity}</span>
-                                <button onClick={() => handleUpdateCartQuantity(cartQuantity + 1)} className="hover:text-gray-300">
-                                   <Plus className="h-4 w-4" />
+                                <span className="text-sm font-bold font-serif">{cartQuantity}</span>
+                                <button onClick={() => handleUpdateCartQuantity(cartQuantity + 1)} className="hover:text-gray-300 transition-colors">
+                                   <Plus className="h-3 w-3" />
                                 </button>
                              </div>
                          </div>
@@ -300,10 +304,10 @@ export default function ProductPage() {
                         <Button 
                           onClick={handleAddToCart}
                           disabled={addingToCart || product.status !== "ACTIVE"}
-                          className="flex-1 h-14 rounded-full bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
+                          className="flex-1 h-16 rounded-none bg-black hover:bg-[#1A3C34] text-white text-xs font-bold uppercase tracking-[0.2em] transition-all transform hover:-translate-y-1 duration-300 shadow-xl"
                         >
-                           {addingToCart ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShoppingCart className="h-4 w-4 mr-2" />}
-                           Add to Cart
+                           {addingToCart ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                           {product.status === "ACTIVE" ? "Add to Cart" : "Out of Stock"}
                         </Button>
                       )}
 
@@ -311,30 +315,30 @@ export default function ProductPage() {
                         variant="outline"
                         onClick={handleToggleWishlist}
                         disabled={togglingWishlist}
-                        className="h-14 w-14 rounded-full border-gray-200 hover:border-black hover:bg-transparent transition-colors p-0 flex items-center justify-center shrink-0"
+                        className="h-16 w-16 rounded-none border-gray-200 hover:border-black hover:bg-transparent transition-colors p-0 flex items-center justify-center shrink-0"
                       >
                          {togglingWishlist ? (
-                           <Loader2 className="h-5 w-5 animate-spin" />
+                           <Loader2 className="h-4 w-4 animate-spin" />
                          ) : (
-                           <Heart className={`h-5 w-5 transition-colors ${inWishlist ? "fill-red-500 text-red-500" : "text-black"}`} />
+                           <Heart className={`h-4 w-4 transition-colors ${inWishlist ? "fill-black text-black" : "text-black"}`} />
                          )}
                       </Button>
                    </div>
                 </div>
                 
-                {/* Meta details */}
-                <div className="border-t border-gray-100 pt-8 space-y-4">
-                    <div className="flex justify-between text-xs uppercase tracking-widest">
-                       <span className="text-gray-400">ID</span>
-                       <span className="font-bold">{product.id}</span>
+                {/* Meta details - Minimal Accordion Style */}
+                <div className="pt-12 space-y-px bg-gray-100">
+                    <div className="flex justify-between items-center p-4 bg-white">
+                       <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Authenticity</span>
+                       <span className="text-[10px] font-bold uppercase tracking-widest text-black">Verified</span>
                     </div>
-                     <div className="flex justify-between text-xs uppercase tracking-widest">
-                       <span className="text-gray-400">Category</span>
-                       <span className="font-bold">Originals</span>
+                    <div className="flex justify-between items-center p-4 bg-white">
+                       <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Shipping</span>
+                       <span className="text-[10px] font-bold uppercase tracking-widest text-black">Global Express</span>
                     </div>
-                     <div className="flex justify-between text-xs uppercase tracking-widest">
-                       <span className="text-gray-400">Authenticity</span>
-                       <span className="font-bold text-green-600">Verified</span>
+                     <div className="flex justify-between items-center p-4 bg-white">
+                       <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Returns</span>
+                       <span className="text-[10px] font-bold uppercase tracking-widest text-black">14 Days</span>
                     </div>
                 </div>
 
