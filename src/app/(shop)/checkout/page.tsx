@@ -261,9 +261,9 @@ export default function CheckoutPage() {
         <div className="lg:col-span-3 space-y-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
+              <h2 className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
                 <MapPin className="h-5 w-5" /> Billing Address
-              </CardTitle>
+              </h2>
               {addresses.length > 0 && !showAddForm && (
                 <Button variant="outline" size="sm" onClick={() => setShowAddForm(true)}>
                   <Plus className="h-4 w-4 mr-1" /> Add New
@@ -356,7 +356,7 @@ export default function CheckoutPage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
+              <h2 className="text-lg font-semibold leading-none tracking-tight">Order Summary</h2>
             </CardHeader>
             <CardContent className="space-y-4">
               {cartItems.length === 0 ? (

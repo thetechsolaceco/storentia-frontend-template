@@ -306,7 +306,7 @@ export default function CartPage() {
           {/* Checkout Summary */}
           <div className="lg:w-1/3">
              <div className="bg-gray-50 p-8 md:p-10 rounded-2xl sticky top-28">
-                <h3 className="text-xl font-bold uppercase tracking-wide mb-8">Order Summary</h3>
+                <h2 className="text-xl font-bold uppercase tracking-wide mb-8">Order Summary</h2>
                 <div className="space-y-4 text-sm mb-8">
                    <div className="flex justify-between">
                       <span className="text-gray-500">Subtotal</span>

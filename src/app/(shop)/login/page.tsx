@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from "next/link";
 import Image from "next/image";
@@ -45,7 +45,7 @@ async function syncLocalCartToServer(): Promise<void> {
   }
 }
 
-function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'email' | 'otp'>('email');
@@ -244,4 +244,14 @@ function LoginPage() {
   );
 }
 
-export default LoginPage;
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-black" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
+  );
+}

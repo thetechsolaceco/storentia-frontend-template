@@ -104,19 +104,19 @@ export default function CollectionsPage() {
 
       <div className="container px-4 md:px-6 py-20">
         <motion.div
-           className="grid grid-cols-1 md:grid-cols-2 gap-12"
+           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12"
            variants={containerVariants}
            initial="hidden"
            animate="visible"
         >
-           {collections.map((item, index) => (
+           {collections.map((item) => (
              <motion.div
                key={item.id}
                variants={itemVariants}
-               className={`group cursor-pointer ${index % 3 === 0 ? 'md:col-span-2' : ''}`}
+               className="group cursor-pointer"
              >
                 <Link href={`/products?collection=${item.id}`} className="block relative">
-                   <div className={`relative overflow-hidden bg-gray-100 rounded-3xl ${index % 3 === 0 ? 'aspect-[2.4/1]' : 'aspect-square'}`}>
+                   <div className="relative overflow-hidden bg-gray-100 rounded-2xl aspect-[4/5]">
                       {item.imageUrl ? (
                          <Image
                            src={item.imageUrl}
@@ -131,19 +131,19 @@ export default function CollectionsPage() {
                       )}
                       
                       {/* Overlay */}
-                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
+                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors duration-300" />
                       
                       {/* Content Overlay */}
-                      <div className="absolute inset-0 p-8 md:p-12 flex flex-col justify-end">
+                      <div className="absolute inset-0 p-8 flex flex-col justify-end">
                          <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                            <h2 className="text-3xl md:text-5xl font-black font-serif uppercase text-white tracking-tighter mb-4 drop-shadow-lg">
+                            <h2 className="text-2xl md:text-3xl font-black font-serif uppercase text-white tracking-tighter mb-2 drop-shadow-md">
                                {item.title}
                             </h2>
-                            <p className="text-white/90 text-sm md:text-base max-w-lg mb-6 line-clamp-2 drop-shadow-md">
+                            <p className="text-white/80 text-sm mb-6 line-clamp-2 drop-shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                {item.description}
                             </p>
                             
-                            <Button className="bg-white text-black hover:bg-[#1A3C34] hover:text-white rounded-full font-bold uppercase tracking-widest px-8 shadow-xl transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0">
+                            <Button className="w-full bg-white text-black hover:bg-[#1A3C34] hover:text-white rounded-full font-bold uppercase tracking-widest shadow-xl transition-all duration-300 transform translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0">
                                View Collection
                             </Button>
                          </div>

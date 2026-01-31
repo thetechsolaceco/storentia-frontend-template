@@ -250,7 +250,7 @@ function ProductsContent() {
         {/* Sidebar Filters */}
         <aside className="w-full lg:w-64 space-y-8 shrink-0">
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest mb-6 pb-2 border-b border-gray-100">Search & Filter</h3>
+            <h2 className="text-xs font-bold uppercase tracking-widest mb-6 pb-2 border-b border-gray-100">Search & Filter</h2>
             <div className="space-y-8">
               <div className="space-y-2">
                 <Label className="text-xs text-gray-400 uppercase tracking-wider">Search</Label>

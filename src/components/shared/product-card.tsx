@@ -19,11 +19,6 @@ export function ProductCard({ product, onAddToCart, onAddToWishlist, loading, lo
   return (
     <div className={cn("group relative cursor-pointer", className)}>
       <div className="aspect-[3/4] w-full overflow-hidden rounded-2xl bg-gray-100 relative mb-4">
-        {/* Main Link covers the image area except the button */}
-        <Link href={`/products/${product.id}`} className="absolute inset-0 z-0">
-          <span className="sr-only">View {product.title}</span>
-        </Link>
-        
         {product.images?.[0]?.url ? (
           <Image
             src={product.images[0].url}
@@ -36,9 +31,14 @@ export function ProductCard({ product, onAddToCart, onAddToWishlist, loading, lo
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
         )}
+
+        {/* Main Link covers the image area except the button */}
+        <Link href={`/products/${product.id}`} className="absolute inset-0 z-[5]">
+          <span className="sr-only">View {product.title}</span>
+        </Link>
         
         {/* Overlay */}
-        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-[4]" />
         
         {/* Wishlist Button */}
         {onAddToWishlist && (
